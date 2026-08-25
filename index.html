@@ -1,0 +1,1545 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="color-scheme" content="dark light" />
+<title>SEM2 Exam Planner</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#127919;</text></svg>" />
+<style>
+/* ============================================================
+   SEM2 PLANNER - single-file app. No dependencies, no network.
+   ============================================================ */
+:root{
+  --bg:#08090c; --bg2:#0d0f14; --panel:#111319; --panel2:#161922;
+  --line:#232733; --line2:#2e3444;
+  --txt:#e8ecf5; --dim:#98a1b4; --dim2:#6b7488;
+  --accent:#5b8cff; --accent2:#8b5bff;
+  --green:#2fd18b; --amber:#ffbe3d; --red:#ff4d5e; --blue:#4da3ff;
+  --r:14px; --rs:9px;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono","JetBrains Mono",Consolas,monospace;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+  --shadow:0 24px 60px -30px rgba(0,0,0,.95), 0 1px 0 0 rgba(255,255,255,.04) inset;
+}
+html[data-theme="light"]{
+  --bg:#f4f6fa; --bg2:#eceff5; --panel:#ffffff; --panel2:#f7f9fc;
+  --line:#dfe4ee; --line2:#cdd4e2;
+  --txt:#10131a; --dim:#5b6478; --dim2:#8791a5;
+  --shadow:0 18px 44px -28px rgba(20,28,50,.45), 0 1px 0 0 rgba(255,255,255,.9) inset;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  margin:0;background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(91,140,255,.10), transparent 60%),
+    radial-gradient(900px 500px at 0% 0%, rgba(139,91,255,.08), transparent 55%),
+    var(--bg);
+  color:var(--txt);font-family:var(--sans);font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;overflow-y:scroll;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+a{color:var(--accent);text-decoration:none}
+h1,h2,h3,h4{margin:0;font-weight:650;letter-spacing:-.02em}
+::selection{background:rgba(91,140,255,.35)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.hide{display:none !important}
+
+/* ---------- shell ---------- */
+.wrap{max-width:1280px;margin:0 auto;padding:0 20px 96px}
+header.top{position:sticky;top:0;z-index:60;backdrop-filter:blur(14px);
+  background:color-mix(in srgb,var(--bg) 82%,transparent);border-bottom:1px solid var(--line)}
+.topin{max-width:1280px;margin:0 auto;padding:12px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:750;letter-spacing:-.03em;font-size:16px}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(91,140,255,.18);animation:pulse 2.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45}}
+.brand small{font-weight:500;color:var(--dim2);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.spacer{flex:1}
+nav.tabs{display:flex;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:3px;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{padding:7px 13px;border-radius:8px;font-size:13px;font-weight:550;color:var(--dim);white-space:nowrap;transition:.15s}
+nav.tabs button:hover{color:var(--txt);background:var(--panel2)}
+nav.tabs button.on{background:var(--accent);color:#fff;box-shadow:0 4px 14px -6px var(--accent)}
+nav.tabs button kbd{opacity:.5;font-size:10px;margin-left:5px;font-family:var(--mono)}
+
+/* ---------- primitives ---------- */
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.pad{padding:18px}
+.grid{display:grid;gap:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:var(--rs);
+  border:1px solid var(--line2);background:var(--panel2);color:var(--txt);font-size:13px;font-weight:560;transition:.15s}
+.btn:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--panel2));transform:translateY(-1px)}
+.btn:active{transform:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--dim)}
+.btn.ghost:hover{color:var(--txt);background:var(--panel2);border-color:var(--line)}
+.btn.danger:hover{border-color:var(--red);background:color-mix(in srgb,var(--red) 14%,var(--panel2));color:var(--red)}
+.btn.sm{padding:5px 10px;font-size:12px}
+.btn.xs{padding:3px 8px;font-size:11px;border-radius:7px}
+input[type=text],input[type=number],input[type=date],input[type=datetime-local],input[type=time],select,textarea{
+  background:var(--bg2);border:1px solid var(--line);border-radius:var(--rs);padding:8px 11px;width:100%;
+  transition:.15s;font-size:13px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,140,255,.15)}
+textarea{resize:vertical;min-height:80px;font-family:var(--mono);font-size:12.5px;line-height:1.6}
+label.fld{display:block}
+label.fld > span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim2);margin-bottom:5px;font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;font-size:11.5px;font-weight:600;
+  border:1px solid var(--line2);background:var(--panel2);color:var(--dim)}
+.sec-title{display:flex;align-items:center;gap:10px;margin:26px 0 12px}
+.sec-title h2{font-size:15px;letter-spacing:.02em}
+.sec-title .line{flex:1;height:1px;background:var(--line)}
+.muted{color:var(--dim)}.muted2{color:var(--dim2)}
+.mono{font-family:var(--mono)}
+.tiny{font-size:11.5px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---------- countdown ---------- */
+.cds{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:18px}
+.cd{position:relative;overflow:hidden;padding:16px;border-radius:var(--r);border:1px solid var(--line);
+  background:linear-gradient(180deg,var(--panel),var(--panel2));box-shadow:var(--shadow)}
+.cd::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--c)}
+.cd::after{content:"";position:absolute;right:-40px;top:-40px;width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle,var(--c),transparent 70%);opacity:.14}
+.cd .name{font-size:12px;font-weight:750;letter-spacing:.1em;text-transform:uppercase;color:var(--c)}
+.cd .when{font-size:11.5px;color:var(--dim2);margin-top:2px}
+.cd .clk{font-family:var(--mono);font-size:26px;font-weight:700;margin-top:10px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.cd .clk small{font-size:11px;color:var(--dim2);font-weight:500;margin-left:1px;margin-right:6px}
+.cd .bar{height:5px;border-radius:99px;background:var(--line);margin-top:12px;overflow:hidden}
+.cd .bar i{display:block;height:100%;border-radius:99px;background:var(--c);transition:width .5s}
+.cd .meta{display:flex;justify-content:space-between;font-size:11px;color:var(--dim2);margin-top:7px}
+.cd.done{opacity:.5}
+.cd.soon{animation:soon 3s ease-in-out infinite}
+@keyframes soon{50%{border-color:var(--c)}}
+
+/* ---------- stat tiles ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{padding:14px 16px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel)}
+.stat .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim2);font-weight:650}
+.stat .v{font-family:var(--mono);font-size:24px;font-weight:700;margin-top:6px;letter-spacing:-.02em}
+.stat .s{font-size:11.5px;color:var(--dim);margin-top:2px}
+
+/* ---------- progress rings ---------- */
+.rings{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.ring{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px;border-radius:var(--r);
+  border:1px solid var(--line);background:var(--panel);text-align:center}
+.ring svg{transform:rotate(-90deg)}
+.ring .lbl{font-weight:700;font-size:13px;letter-spacing:.04em}
+.ring .sub{font-size:11px;color:var(--dim2)}
+.ringwrap{position:relative}
+.ringwrap .pct{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:17px;font-weight:700}
+
+/* ---------- lecture grid ---------- */
+.subjblock{margin-bottom:16px}
+.subjhead{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid var(--line);
+  border-radius:var(--r) var(--r) 0 0;background:var(--panel2);flex-wrap:wrap}
+.subjhead .tag{font-weight:800;font-size:13px;letter-spacing:.08em;color:var(--c)}
+.subjbody{border:1px solid var(--line);border-top:0;border-radius:0 0 var(--r) var(--r);background:var(--panel);padding:14px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
+.lec{position:relative;border:1px solid var(--line);border-radius:10px;background:var(--bg2);padding:8px 6px 7px;
+  text-align:center;transition:.14s;cursor:pointer;user-select:none}
+.lec:hover{border-color:var(--line2);transform:translateY(-2px)}
+.lec .n{font-family:var(--mono);font-size:13px;font-weight:700}
+.lec .dots{display:flex;gap:3px;justify-content:center;margin-top:6px}
+.lec .dots i{width:5px;height:5px;border-radius:50%;background:var(--line2);transition:.14s}
+.lec .dots i.on{background:var(--green)}
+.lec .dots i.on.idx{background:var(--blue)}
+.lec .dots i.on.rev{background:var(--accent2)}
+.lec[data-rag="strong"]{border-color:color-mix(in srgb,var(--green) 55%,var(--line));background:color-mix(in srgb,var(--green) 10%,var(--bg2))}
+.lec[data-rag="medium"]{border-color:color-mix(in srgb,var(--amber) 55%,var(--line));background:color-mix(in srgb,var(--amber) 10%,var(--bg2))}
+.lec[data-rag="weak"]{border-color:color-mix(in srgb,var(--red) 60%,var(--line));background:color-mix(in srgb,var(--red) 12%,var(--bg2))}
+.lec.watched .n{color:var(--txt)}
+.lec:not(.watched) .n{color:var(--dim2)}
+.lec .note-flag{position:absolute;top:4px;right:5px;font-size:9px;opacity:.8}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--dim2);margin-top:12px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:7px;height:7px;border-radius:50%;display:inline-block}
+
+/* ---------- plan / timeline ---------- */
+.day{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);margin-bottom:10px;overflow:hidden;transition:.18s}
+.day.today{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,140,255,.13)}
+.day.past{opacity:.62}
+.day.exam{border-color:color-mix(in srgb,var(--red) 55%,var(--line))}
+.dayhead{display:flex;align-items:center;gap:12px;padding:12px 15px;cursor:pointer;background:var(--panel2)}
+.dayhead:hover{background:color-mix(in srgb,var(--accent) 6%,var(--panel2))}
+.dayhead .date{font-family:var(--mono);font-size:13px;font-weight:700;min-width:64px}
+.dayhead .dow{font-size:11px;color:var(--dim2);min-width:34px}
+.dayhead .ttl{font-weight:600;font-size:13.5px}
+.dayhead .prog{margin-left:auto;display:flex;align-items:center;gap:9px}
+.minibar{width:78px;height:5px;border-radius:99px;background:var(--line);overflow:hidden}
+.minibar i{display:block;height:100%;background:var(--green);transition:width .4s}
+.daybody{padding:4px 15px 15px;border-top:1px solid var(--line)}
+.task{display:flex;align-items:flex-start;gap:11px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.task:last-child{border-bottom:0}
+.task .cb{flex:none;width:19px;height:19px;border-radius:6px;border:1.5px solid var(--line2);display:grid;place-items:center;
+  margin-top:1px;transition:.15s;font-size:12px;color:transparent}
+.task .cb:hover{border-color:var(--green)}
+.task.done .cb{background:var(--green);border-color:var(--green);color:#062;font-weight:900}
+.task.done .tmain{text-decoration:line-through;opacity:.5}
+.tmain{flex:1;min-width:0}
+.tmain .tt{font-size:13.5px;font-weight:550}
+.tmain .ts{font-size:11.5px;color:var(--dim2);margin-top:2px}
+.lecpills{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}
+.pill{font-family:var(--mono);font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;
+  border:1px solid var(--line2);color:var(--dim);background:var(--bg2);cursor:pointer;transition:.12s}
+.pill:hover{border-color:var(--accent);color:var(--txt)}
+.pill.on{background:var(--green);border-color:var(--green);color:#04301f}
+.kind{font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:5px;
+  border:1px solid var(--line2);color:var(--dim2)}
+.kind.watch{color:var(--blue);border-color:color-mix(in srgb,var(--blue) 45%,var(--line))}
+.kind.revise{color:var(--accent2);border-color:color-mix(in srgb,var(--accent2) 45%,var(--line))}
+.kind.exam{color:var(--red);border-color:color-mix(in srgb,var(--red) 50%,var(--line));background:color-mix(in srgb,var(--red) 12%,transparent)}
+.kind.rest{color:var(--green);border-color:color-mix(in srgb,var(--green) 45%,var(--line))}
+.kind.task{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 45%,var(--line))}
+
+/* ---------- index table ---------- */
+.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+.tbl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim2);
+  padding:9px 10px;border-bottom:1px solid var(--line);font-weight:700;background:var(--panel)}
+.tbl td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl tr:hover td{background:var(--panel2)}
+.tbl .ref{font-family:var(--mono);font-size:12px;color:var(--blue)}
+.tbl .frm{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.tblwrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--line);background:var(--panel)}
+.subjdot{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:11.5px}
+.subjdot i{width:7px;height:7px;border-radius:50%}
+.empty{text-align:center;padding:44px 20px;color:var(--dim2)}
+.empty .big{font-size:30px;margin-bottom:8px;opacity:.6}
+
+/* ---------- timer ---------- */
+.timerbox{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tclock{font-family:var(--mono);font-size:40px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;min-width:150px}
+.tclock.run{color:var(--green)}
+.heat{display:grid;grid-template-columns:repeat(auto-fill,minmax(13px,1fr));gap:3px}
+.heat i{aspect-ratio:1;border-radius:3px;background:var(--line);position:relative}
+
+/* ---------- modal / toast ---------- */
+.mask{position:fixed;inset:0;background:rgba(4,6,12,.72);backdrop-filter:blur(6px);z-index:200;
+  display:grid;place-items:center;padding:20px;animation:fade .18s}
+@keyframes fade{from{opacity:0}}
+.modal{width:min(620px,100%);max-height:88vh;overflow:auto;border-radius:18px;border:1px solid var(--line2);
+  background:var(--panel);box-shadow:0 40px 100px -30px #000;animation:pop .2s cubic-bezier(.2,1,.3,1)}
+@keyframes pop{from{transform:translateY(14px) scale(.98);opacity:0}}
+.modal header{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line);
+  position:sticky;top:0;background:var(--panel);z-index:2}
+.modal header h3{font-size:15px;flex:1}
+.modal .body{padding:18px}
+.modal footer{padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:9px;justify-content:flex-end;
+  position:sticky;bottom:0;background:var(--panel)}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:300;
+  background:var(--panel);border:1px solid var(--line2);border-radius:11px;padding:11px 17px;font-size:13px;font-weight:550;
+  box-shadow:0 20px 50px -20px #000;animation:up .22s}
+@keyframes up{from{transform:translate(-50%,14px);opacity:0}}
+.toast.good{border-color:var(--green);color:var(--green)}
+.toast.bad{border-color:var(--red);color:var(--red)}
+
+/* ---------- rules / misc ---------- */
+.rulecols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.rulelist{list-style:none;padding:0;margin:0}
+.rulelist li{padding:7px 0 7px 24px;position:relative;font-size:13px;border-bottom:1px dashed var(--line)}
+.rulelist li:last-child{border-bottom:0}
+.rulelist li::before{position:absolute;left:0;top:7px;font-size:13px}
+.rulelist.do li::before{content:"\2713";color:var(--green);font-weight:800}
+.rulelist.dont li::before{content:"\2715";color:var(--red);font-weight:800}
+.flowsteps{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px}
+.flowsteps b{padding:6px 11px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);font-weight:650}
+.flowsteps span{color:var(--dim2)}
+.pri{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px}
+.pri b{padding:5px 11px;border-radius:8px;background:color-mix(in srgb,var(--accent) 14%,var(--bg2));border:1px solid var(--line2)}
+
+@media (max-width:720px){
+  .wrap{padding:0 12px 90px}
+  .topin{padding:10px 12px;gap:9px}
+  .brand small{display:none}
+  .tclock{font-size:32px}
+  /* day header: date + badges on one line, title on its own */
+  .dayhead{flex-wrap:wrap;row-gap:5px;padding:11px 12px}
+  .dayhead .ttl{order:5;flex-basis:100%;font-size:12.5px;color:var(--dim)}
+  .dayhead .dow{min-width:0}
+  .dayhead .prog{margin-left:auto}
+  .minibar{width:54px}
+  .sec-title{flex-wrap:wrap;row-gap:8px}
+  .sec-title .line{display:none}
+  .grid[style*="2fr"]{grid-template-columns:minmax(0,1fr) !important}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat .v{font-size:20px}
+  .lgrid{grid-template-columns:repeat(auto-fill,minmax(62px,1fr))}
+}
+@media print{
+  header.top,nav.tabs,.noprint{display:none !important}
+  body{background:#fff;color:#000}
+  .card,.tblwrap{box-shadow:none;border-color:#bbb}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="topin">
+    <div class="brand"><span class="dot"></span>SEM2 PLANNER <small id="brandSub">exam tracker</small></div>
+    <nav class="tabs" id="tabs"></nav>
+    <div class="spacer"></div>
+    <div class="row" style="gap:6px">
+      <button class="btn sm ghost" id="btnUndo" title="Undo last change (Ctrl+Z)">&#8630;</button>
+      <button class="btn sm ghost" id="btnTheme" title="Toggle theme">&#9681;</button>
+      <button class="btn sm ghost" id="btnHelp" title="Keyboard shortcuts">?</button>
+      <button class="btn sm" id="btnSave" title="Export a JSON backup">&#8681; Backup</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="view"></main>
+<div id="modalHost"></div>
+<div id="toastHost"></div>
+
+<script>
+/* =====================================================================
+   SEM2 PLANNER — state, defaults, helpers
+   ===================================================================== */
+const KEY = "sem2planner.state.v1";
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => Math.random().toString(36).slice(2, 9);
+const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+const range = (a, b) => { const o = []; for (let i = a; i <= b; i++) o.push(i); return o; };
+
+/* ---------- default plan (from the written study plan) ---------- */
+const SUBJECTS = [
+  { id: "nlp", name: "NLP", full: "Natural Language Processing",     color: "#ff4d5e", exam: "2026-09-05T09:00", lectures: 16 },
+  { id: "drl", name: "DRL", full: "Deep Reinforcement Learning",     color: "#ff8a3d", exam: "2026-09-06T09:00", lectures: 16 },
+  { id: "ir",  name: "IR",  full: "Information Retrieval",           color: "#4da3ff", exam: "2026-09-12T16:30", lectures: 16 },
+  { id: "aci", name: "ACI", full: "Advanced Computational Intelligence", color: "#2fd18b", exam: "2026-09-13T13:00", lectures: 16 },
+];
+
+const L = (subject, kind, a, b) => ({ id: uid(), type: "lec", subject, kind, lecs: range(a, b), done: false });
+const T = (text, kind)          => ({ id: uid(), type: "todo", kind: kind || "task", text, done: false });
+const X = (subject, text)       => ({ id: uid(), type: "exam", subject, kind: "exam", text, done: false });
+const DAY = (date, title, phase, tasks) => ({ date, title, phase, tasks });
+
+function defaultDays() {
+  return [
+    DAY("2026-08-25", "NLP + DRL — first pass", "core", [L("nlp","watch",1,2),   L("drl","watch",1,2)]),
+    DAY("2026-08-26", "NLP + DRL — first pass", "core", [L("nlp","watch",3,4),   L("drl","watch",3,4)]),
+    DAY("2026-08-27", "NLP + DRL — first pass", "core", [L("nlp","watch",5,6),   L("drl","watch",5,6)]),
+    DAY("2026-08-28", "NLP + DRL — first pass", "core", [L("nlp","watch",7,8),   L("drl","watch",7,8)]),
+    DAY("2026-08-29", "NLP + DRL — push",       "core", [L("nlp","watch",9,11),  L("drl","watch",9,10)]),
+    DAY("2026-08-30", "NLP + DRL — close out",  "core", [L("nlp","watch",12,16), L("drl","watch",11,16),
+                                                          T("Checkpoint: NLP 16/16 and DRL 16/16 complete", "task")]),
+    DAY("2026-08-31", "IR + ACI — first pass", "pass2", [L("ir","watch",1,4),    L("aci","watch",1,4)]),
+    DAY("2026-09-01", "IR + ACI — first pass", "pass2", [L("ir","watch",5,8),    L("aci","watch",5,8)]),
+    DAY("2026-09-02", "IR + ACI — first pass", "pass2", [L("ir","watch",9,12),   L("aci","watch",9,12)]),
+    DAY("2026-09-03", "IR + ACI — close out",  "pass2", [L("ir","watch",13,16),  L("aci","watch",13,16),
+                                                          T("Checkpoint: all four subjects 16/16 first-pass complete", "task")]),
+    DAY("2026-09-04", "NLP FINAL REVISION", "revise", [
+      L("nlp","revise",1,16),
+      T("Build/finish NLP master index", "task"),
+      T("Formulas + algorithms sweep", "task"),
+      T("Important questions + weak topics", "task"),
+      T("Open-book retrieval drill (find any topic in under 60s)", "task"),
+      T("No new learning at night — sleep properly", "rest"),
+    ]),
+    DAY("2026-09-05", "NLP EXAM  →  DRL revision", "exam", [
+      X("nlp", "NLP EXAM — 09:00"),
+      T("Short rest after the exam", "rest"),
+      L("drl","revise",1,16),
+      T("DRL: formulas, algorithms, numericals, weak topics, master index", "task"),
+    ]),
+    DAY("2026-09-06", "DRL EXAM  →  rest", "exam", [
+      X("drl", "DRL EXAM — 09:00"),
+      T("REST — recover properly", "rest"),
+      T("Start IR lightly only if you actually have energy", "task"),
+    ]),
+    DAY("2026-09-07", "IR revision + ACI pass", "revise", [L("ir","revise",1,4),   L("aci","watch",1,2)]),
+    DAY("2026-09-08", "IR revision + ACI pass", "revise", [L("ir","revise",5,8),   L("aci","watch",3,6)]),
+    DAY("2026-09-09", "IR revision + ACI pass", "revise", [L("ir","revise",9,12),  L("aci","watch",7,10)]),
+    DAY("2026-09-10", "IR revision + ACI pass", "revise", [L("ir","revise",13,16), L("aci","watch",11,14)]),
+    DAY("2026-09-11", "Full IR revision + mock", "revise", [
+      T("Full IR revision sweep", "task"),
+      T("IR mock / past-paper under exam conditions", "task"),
+      L("aci","watch",15,16),
+      T("ACI weak topics", "task"),
+    ]),
+    DAY("2026-09-12", "IR EXAM  →  ACI intensive", "exam", [
+      T("Morning: final IR revision", "task"),
+      X("ir", "IR EXAM — 16:30"),
+      L("aci","revise",1,16),
+      T("ACI: algorithms, concepts, formulas, questions, weak topics, master index", "task"),
+    ]),
+    DAY("2026-09-13", "ACI EXAM  →  DONE", "exam", [
+      T("Morning: final ACI revision", "task"),
+      X("aci", "ACI EXAM — 13:00"),
+      T("🎯 Semester done", "rest"),
+    ]),
+  ];
+}
+
+function defaultState() {
+  return {
+    v: 1,
+    title: "SEM2 PLANNER",
+    subtitle: "exam tracker",
+    subjects: SUBJECTS.map(s => ({ ...s })),
+    days: defaultDays(),
+    lec: {},                 // "nlp-3" -> {w,i,r,rag,note,mins}
+    index: [],               // master open-book index
+    sessions: [],            // study timer log
+    prefs: { theme: "dark", tab: "dash", speed: 1.5, hoursPerLec: 2, dailyGoalMin: 300, collapsed: {} },
+    timer: { running: false, startedAt: 0, subject: "nlp", lecture: 1, accum: 0 },
+  };
+}
+
+/* ---------- persistence ---------- */
+let S = load();
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return defaultState();
+    const p = JSON.parse(raw);
+    const d = defaultState();
+    return { ...d, ...p, prefs: { ...d.prefs, ...(p.prefs || {}) }, timer: { ...d.timer, ...(p.timer || {}) } };
+  } catch (e) { console.warn("state load failed", e); return defaultState(); }
+}
+let saveT = null;
+
+/* Undo history. Every write keeps the *previous* stored snapshot, so any
+   destructive action — clearing a subject, un-ticking a whole day, a stray
+   reset — is one Ctrl-Z away. Kept in memory only; the JSON backup is the
+   long-term safety net. */
+const UNDO_MAX = 40;
+let undoStack = [], undoing = false, lastWrite = null;
+
+function save(now) {
+  /* Snapshot synchronously: the write below is debounced, so taking the
+     "before" picture inside it would miss rapid successive edits. */
+  if (!undoing) {
+    const prev = lastWrite !== null ? lastWrite : localStorage.getItem(KEY);
+    if (prev && prev !== undoStack[undoStack.length - 1]) {
+      undoStack.push(prev);
+      if (undoStack.length > UNDO_MAX) undoStack.shift();
+    }
+  }
+  clearTimeout(saveT);
+  const go = () => {
+    try {
+      const next = JSON.stringify(S);
+      localStorage.setItem(KEY, next);
+      lastWrite = next;
+    } catch (e) { toast("Storage full — export a backup", "bad"); }
+  };
+  now ? go() : saveT = setTimeout(go, 220);
+}
+
+function undo() {
+  if (!undoStack.length) { toast("Nothing to undo"); return; }
+  undoing = true;
+  try {
+    S = JSON.parse(undoStack.pop());
+    save(true); applyTheme(); render();
+    toast("Undone — " + undoStack.length + " step" + (undoStack.length === 1 ? "" : "s") + " left", "good");
+  } finally { undoing = false; }
+}
+
+/* Another tab of the same planner just wrote. Adopt its state instead of
+   silently overwriting it from this tab's stale copy. */
+window.addEventListener("storage", ev => {
+  if (ev.key !== KEY || !ev.newValue || ev.newValue === lastWrite) return;
+  try {
+    S = JSON.parse(ev.newValue);
+    lastWrite = ev.newValue;
+    applyTheme(); render();
+    toast("Synced from another tab");
+  } catch (e) {}
+});
+
+/* ---------- dates ---------- */
+const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function todayStr() { const d = new Date(); return ymd(d); }
+function ymd(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function parseDay(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
+function fmtDay(s) { const d = parseDay(s); return MON[d.getMonth()] + " " + d.getDate(); }
+function dowOf(s) { return DOW[parseDay(s).getDay()]; }
+function parseDT(s) { const [d, t] = s.split("T"); const [y, mo, da] = d.split("-").map(Number); const [h, mi] = (t || "00:00").split(":").map(Number); return new Date(y, mo - 1, da, h, mi); }
+function fmtDT(s) { const d = parseDT(s); let h = d.getHours(), ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12;
+  return DOW[d.getDay()] + " " + MON[d.getMonth()] + " " + d.getDate() + ", " + h + ":" + String(d.getMinutes()).padStart(2, "0") + " " + ap; }
+function daysBetween(a, b) { return Math.round((parseDay(b) - parseDay(a)) / 86400000); }
+function hm(min) { const h = Math.floor(min / 60), m = Math.round(min % 60); return (h ? h + "h " : "") + m + "m"; }
+
+/* ---------- lecture record helpers ---------- */
+const lkey = (s, n) => s + "-" + n;
+function lrec(s, n) {
+  const k = lkey(s, n);
+  if (!S.lec[k]) S.lec[k] = { w: 0, i: 0, r: 0, rag: "", note: "", mins: 0 };
+  return S.lec[k];
+}
+function lecMins(sid, n) { return S.sessions.filter(x => x.subject === sid && x.lecture === n).reduce((a, x) => a + x.mins, 0); }
+function lpeek(s, n) { return S.lec[lkey(s, n)] || { w: 0, i: 0, r: 0, rag: "", note: "", mins: 0 }; }
+function subj(id) { return S.subjects.find(s => s.id === id) || { id, name: id.toUpperCase(), color: "#888", lectures: 16, exam: "" }; }
+
+function subjStats(s) {
+  const tot = s.lectures;
+  let w = 0, i = 0, r = 0, strong = 0, medium = 0, weak = 0, mins = 0, notes = 0;
+  for (let n = 1; n <= tot; n++) {
+    const L = lpeek(s.id, n);
+    if (L.w) w++; if (L.i) i++; if (L.r) r++;
+    if (L.rag === "strong") strong++; else if (L.rag === "medium") medium++; else if (L.rag === "weak") weak++;
+    if (L.note && L.note.trim()) notes++;
+  }
+  /* The session log is the single source of truth for time spent. */
+  mins = S.sessions.filter(x => x.subject === s.id).reduce((a, x) => a + x.mins, 0);
+  return { tot, w, i, r, strong, medium, weak, notes, mins,
+           pct: tot ? Math.round(w / tot * 100) : 0,
+           idxCount: S.index.filter(e => e.subject === s.id).length };
+}
+
+/* scheduled lectures for a subject/kind up to and including a date */
+function scheduledUpto(subject, kind, date) {
+  const set = new Set();
+  S.days.forEach(d => {
+    if (d.date > date) return;
+    d.tasks.forEach(t => { if (t.type === "lec" && t.subject === subject && t.kind === kind) t.lecs.forEach(n => set.add(n)); });
+  });
+  return set;
+}
+function taskDone(t) {
+  if (t.type !== "lec") return !!t.done;
+  const f = t.kind === "revise" ? "r" : "w";
+  return t.lecs.length > 0 && t.lecs.every(n => lpeek(t.subject, n)[f]);
+}
+function dayProgress(d) {
+  const total = d.tasks.length || 1;
+  const done = d.tasks.filter(taskDone).length;
+  return { done, total: d.tasks.length, pct: Math.round(done / total * 100) };
+}
+function examStatus(s) {
+  const t = parseDT(s.exam).getTime(), now = Date.now();
+  return { ms: t - now, past: t < now };
+}
+function nextExam() {
+  const up = S.subjects.filter(s => !examStatus(s).past).sort((a, b) => parseDT(a.exam) - parseDT(b.exam));
+  return up[0] || null;
+}
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg, kind) {
+  const h = $("#toastHost");
+  h.innerHTML = '<div class="toast ' + (kind || "") + '">' + esc(msg) + "</div>";
+  clearTimeout(toastT);
+  toastT = setTimeout(() => h.innerHTML = "", 2600);
+}
+
+/* ---------- modal ---------- */
+let modalOpen = false;
+function modal({ title, body, footer, wide, onMount }) {
+  modalOpen = true;
+  const host = $("#modalHost");
+  host.innerHTML =
+    '<div class="mask" id="mask"><div class="modal" style="' + (wide ? "width:min(860px,100%)" : "") + '" role="dialog" aria-modal="true">' +
+      '<header><h3>' + title + '</h3><button class="btn xs ghost" id="mClose" aria-label="Close">&#10005;</button></header>' +
+      '<div class="body">' + body + "</div>" +
+      (footer ? "<footer>" + footer + "</footer>" : "") +
+    "</div></div>";
+  const close = () => { host.innerHTML = ""; modalOpen = false; };
+  $("#mClose").onclick = close;
+  $("#mask").onclick = e => { if (e.target.id === "mask") close(); };
+  if (onMount) onMount(close);
+  return close;
+}
+function confirmBox(msg, onYes) {
+  const close = modal({
+    title: "Are you sure?",
+    body: '<p style="margin:0;font-size:14px">' + esc(msg) + "</p>",
+    footer: '<button class="btn ghost" id="cNo">Cancel</button><button class="btn danger" id="cYes">Yes, do it</button>',
+    onMount(cl) { $("#cNo").onclick = cl; $("#cYes").onclick = () => { cl(); onYes(); }; },
+  });
+  return close;
+}
+
+/* ---------- svg ring ---------- */
+function ring(pct, color, size) {
+  size = size || 76;
+  const r = (size - 9) / 2, c = 2 * Math.PI * r, off = c * (1 - pct / 100);
+  return '<div class="ringwrap" style="width:' + size + "px;height:" + size + 'px">' +
+    '<svg width="' + size + '" height="' + size + '">' +
+      '<circle cx="' + size/2 + '" cy="' + size/2 + '" r="' + r + '" fill="none" stroke="var(--line)" stroke-width="7"/>' +
+      '<circle cx="' + size/2 + '" cy="' + size/2 + '" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="7" ' +
+        'stroke-linecap="round" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '"/>' +
+    "</svg><div class=\"pct\">" + pct + "</div></div>";
+}
+/* =====================================================================
+   VIEWS — router, dashboard, plan
+   ===================================================================== */
+const TABS = [
+  { id: "dash",  label: "Today",    key: "1" },
+  { id: "plan",  label: "Plan",     key: "2" },
+  { id: "subj",  label: "Subjects", key: "3" },
+  { id: "index", label: "Index",    key: "4" },
+  { id: "stats", label: "Stats",    key: "5" },
+  { id: "setup", label: "Setup",    key: "6" },
+];
+
+function renderTabs() {
+  $("#tabs").innerHTML = TABS.map(t =>
+    '<button data-act="tab" data-tab="' + t.id + '" class="' + (S.prefs.tab === t.id ? "on" : "") + '">' +
+    esc(t.label) + '<kbd>' + t.key + "</kbd></button>").join("");
+}
+
+function render() {
+  renderTabs();
+  $("#brandSub").textContent = S.subtitle || "";
+  const v = $("#view");
+  const map = { dash: viewDash, plan: viewPlan, subj: viewSubjects, index: viewIndex, stats: viewStats, setup: viewSetup };
+  v.innerHTML = (map[S.prefs.tab] || viewDash)();
+  v.scrollTop = 0;
+  afterRender();
+  tick();
+}
+
+/* ---------------------------------------------------------------- pace */
+function overall() {
+  let tot = 0, w = 0, r = 0, idx = S.index.length, weak = 0, mins = 0;
+  S.subjects.forEach(s => { const st = subjStats(s); tot += st.tot; w += st.w; r += st.r; weak += st.weak; mins += st.mins; });
+  return { tot, w, r, idx, weak, mins, pct: tot ? Math.round(w / tot * 100) : 0 };
+}
+function paceInfo() {
+  const t = todayStr();
+  /* Today is still in play, so the yardstick is everything scheduled up to
+     yesterday — you are only "behind" once a planned day has actually passed. */
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  const cut = ymd(y);
+  let should = 0, have = 0;
+  S.subjects.forEach(s => {
+    const sc = scheduledUpto(s.id, "watch", cut);
+    should += sc.size;
+    sc.forEach(n => { if (lpeek(s.id, n).w) have++; });
+  });
+  const remainingDays = Math.max(0, S.days.filter(d => d.date >= t).length);
+  const o = overall();
+  const left = o.tot - o.w;
+  return { should, have, delta: have - should, left, remainingDays,
+           perDay: remainingDays ? (left / remainingDays) : left };
+}
+
+/* ---------------------------------------------------------- DASHBOARD */
+function viewDash() {
+  const t = todayStr();
+  const o = overall(), p = paceInfo();
+  const today = S.days.find(d => d.date === t);
+  const upcoming = S.days.filter(d => d.date > t).slice(0, 3);
+  const ne = nextExam();
+
+  let h = "";
+
+  /* countdowns */
+  h += '<div class="cds">' + S.subjects.map(s => {
+    const st = examStatus(s), stat = subjStats(s);
+    const start = S.days.length ? parseDay(S.days[0].date).getTime() : Date.now();
+    const end = parseDT(s.exam).getTime();
+    const prog = clamp(Math.round((Date.now() - start) / (end - start) * 100), 0, 100);
+    return '<div class="cd ' + (st.past ? "done" : "") + (!st.past && st.ms < 864e5 ? " soon" : "") + '" style="--c:' + s.color + '">' +
+      '<div class="name">' + esc(s.name) + "</div>" +
+      '<div class="when">' + fmtDT(s.exam) + "</div>" +
+      '<div class="clk" data-cd="' + s.id + '">--</div>' +
+      '<div class="bar"><i style="width:' + prog + '%"></i></div>' +
+      '<div class="meta"><span>' + stat.w + "/" + stat.tot + " watched</span><span>" + stat.idxCount + " index entries</span></div>" +
+      "</div>";
+  }).join("") + "</div>";
+
+  /* pace strip */
+  const dstate = p.delta >= 0 ? "good" : "bad";
+  h += '<div class="sec-title"><h2>Where you stand</h2><div class="line"></div></div>';
+  h += '<div class="stats">' +
+    stat_("Coverage", o.w + "/" + o.tot, o.pct + "% of all lectures watched") +
+    stat_("Plan pace", (p.delta >= 0 ? "+" : "") + p.delta,
+          p.delta >= 0 ? "on or ahead of schedule" : "lectures behind schedule",
+          p.delta >= 0 ? "var(--green)" : "var(--red)") +
+    stat_("Needed / day", p.perDay ? p.perDay.toFixed(1) : "0",
+          p.left + " lectures over " + p.remainingDays + " days") +
+    stat_("Master index", String(o.idx), "topics indexed for open book", "var(--blue)") +
+    stat_("Weak topics", String(o.weak), "marked 🔴 — revisit first", o.weak ? "var(--red)" : "") +
+    stat_("Study logged", hm(o.mins), "of ~" + (S.subjects.reduce((a, s) => a + s.lectures, 0) * (S.prefs.hoursPerLec || 2)) + "h estimated") +
+  "</div>";
+
+  /* today */
+  h += '<div class="sec-title"><h2>Today — ' + fmtDay(t) + " · " + dowOf(t) + '</h2><div class="line"></div>' +
+       (ne ? '<span class="chip">next: ' + esc(ne.name) + "</span>" : "") + "</div>";
+  h += '<div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(260px,1fr)">';
+  h += '<div class="card pad">';
+  if (today) {
+    const pr = dayProgress(today);
+    h += '<div class="row" style="margin-bottom:6px"><b style="font-size:14px">' + esc(today.title) + "</b>" +
+         '<span class="spacer"></span><span class="tiny muted2 num">' + pr.done + "/" + pr.total + "</span>" +
+         '<div class="minibar"><i style="width:' + pr.pct + '%"></i></div></div>';
+    h += today.tasks.map(tk => taskHTML(today, tk)).join("");
+    h += '<div class="row" style="margin-top:12px"><button class="btn sm" data-act="addTask" data-date="' + t + '">+ Add task to today</button></div>';
+  } else {
+    h += '<div class="empty"><div class="big">📅</div>No plan entry for today.' +
+         '<div style="margin-top:12px"><button class="btn sm" data-act="addDay" data-date="' + t + '">+ Create today in the plan</button></div></div>';
+  }
+  h += "</div>";
+
+  /* timer + next up */
+  h += "<div>" + timerCard() + upNext(upcoming) + "</div>";
+  h += "</div>";
+
+  /* weak topics */
+  const weakLecs = [];
+  S.subjects.forEach(s => { for (let n = 1; n <= s.lectures; n++) { const L = lpeek(s.id, n); if (L.rag === "weak") weakLecs.push({ s, n, L }); } });
+  const weakIdx = S.index.filter(e => e.pri === "weak");
+  if (weakLecs.length || weakIdx.length) {
+    h += '<div class="sec-title"><h2>🔴 Revisit first</h2><div class="line"></div></div><div class="card pad">';
+    if (weakLecs.length) h += '<div class="row" style="gap:6px">' + weakLecs.map(x =>
+      '<button class="pill" style="border-color:var(--red);color:var(--red)" data-act="lec" data-s="' + x.s.id + '" data-n="' + x.n + '">' +
+      esc(x.s.name) + " L" + x.n + "</button>").join("") + "</div>";
+    if (weakIdx.length) h += '<div class="tiny muted" style="margin-top:12px">Index topics flagged weak: ' +
+      weakIdx.map(e => "<b>" + esc(e.topic) + "</b>").join(", ") + "</div>";
+    h += "</div>";
+  }
+
+  /* open-book protocol */
+  h += openBookCard();
+  return h;
+}
+
+function stat_(k, v, s, color) {
+  return '<div class="stat"><div class="k">' + esc(k) + '</div><div class="v"' +
+    (color ? ' style="color:' + color + '"' : "") + ">" + esc(v) + '</div><div class="s">' + s + "</div></div>";
+}
+
+function upNext(days) {
+  if (!days.length) return "";
+  return '<div class="card pad" style="margin-top:14px"><div class="k tiny muted2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:9px">Coming up</div>' +
+    days.map(d => '<div class="row" style="padding:7px 0;border-bottom:1px dashed var(--line)">' +
+      '<span class="mono tiny" style="min-width:52px">' + fmtDay(d.date) + "</span>" +
+      '<span class="tiny">' + esc(d.title) + "</span></div>").join("") +
+    '<button class="btn sm ghost" style="margin-top:10px" data-act="tab" data-tab="plan">Open full plan →</button></div>';
+}
+
+function openBookCard() {
+  return '<div class="sec-title"><h2>Open-book protocol</h2><div class="line"></div></div>' +
+  '<div class="card pad"><div class="flowsteps">' +
+    "<b>Question</b><span>→</span><b>Identify topic</b><span>→</span><b>Search keyword</b><span>→</span>" +
+    "<b>Find lecture / page / timestamp</b><span>→</span><b>Solve</b>" +
+  '</div><div class="pri" style="margin-top:14px"><span class="muted2 tiny">PRIORITY</span>' +
+    "<b>Understanding</b><span class=muted2>&gt;</span><b>Retrieval speed</b><span class=muted2>&gt;</span>" +
+    "<b>Problem solving</b><span class=muted2>&gt;</span><b>Memorisation</b></div>" +
+  '<div class="rulecols" style="margin-top:16px">' +
+    '<div><div class="tiny muted2" style="font-weight:700;letter-spacing:.08em;margin-bottom:6px">DO</div><ul class="rulelist do">' +
+      "<li>Finish coverage first</li><li>Index everything important</li><li>Practise exam questions</li>" +
+      "<li>Mark topics 🟢 strong / 🟡 needs revision / 🔴 weak</li><li>Revisit 🔴 topics first</li></ul></div>" +
+    '<div><div class="tiny muted2" style="font-weight:700;letter-spacing:.08em;margin-bottom:6px">DO NOT</div><ul class="rulelist dont">' +
+      "<li>Make long beautiful notes</li><li>Rewatch everything repeatedly</li><li>Spend equal time on every topic</li>" +
+      "<li>Memorise what you can retrieve quickly</li></ul></div>" +
+  "</div></div>";
+}
+
+/* ------------------------------------------------------------- TIMER */
+function timerMinutes() {
+  const t = S.timer;
+  return (t.accum + (t.running ? (Date.now() - t.startedAt) : 0)) / 60000;
+}
+function timerCard() {
+  const t = S.timer;
+  return '<div class="card pad"><div class="k tiny muted2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:10px">Study timer</div>' +
+    '<div class="tclock ' + (t.running ? "run" : "") + '" id="tclock">00:00:00</div>' +
+    '<div class="row" style="margin-top:10px;gap:7px">' +
+      '<select id="tSub" style="width:auto;flex:1">' + S.subjects.map(s =>
+        '<option value="' + s.id + '"' + (t.subject === s.id ? " selected" : "") + ">" + esc(s.name) + "</option>").join("") + "</select>" +
+      '<input type="number" id="tLec" min="1" value="' + (t.lecture || 1) + '" style="width:72px" title="Lecture number" />' +
+    "</div>" +
+    '<div class="row" style="margin-top:10px;gap:7px">' +
+      '<button class="btn primary sm" data-act="timer" data-mode="' + (t.running ? "pause" : "start") + '">' + (t.running ? "❚❚ Pause" : "▶ Start") + "</button>" +
+      '<button class="btn sm" data-act="timer" data-mode="log">■ Log session</button>' +
+      '<button class="btn sm ghost" data-act="timer" data-mode="reset">Reset</button>' +
+    "</div>" +
+    '<div class="tiny muted2" style="margin-top:9px">Today: <b class="num">' + hm(minutesOn(todayStr())) + "</b> · goal " + hm(S.prefs.dailyGoalMin) + "</div>" +
+  "</div>";
+}
+function minutesOn(date) { return S.sessions.filter(s => s.date === date).reduce((a, s) => a + s.mins, 0); }
+
+function timerAction(mode) {
+  const t = S.timer;
+  const selS = $("#tSub"), selL = $("#tLec");
+  if (selS) t.subject = selS.value;
+  if (selL) t.lecture = clamp(parseInt(selL.value || "1", 10) || 1, 1, 999);
+  if (mode === "start") { t.running = true; t.startedAt = Date.now(); }
+  else if (mode === "pause") { t.accum += Date.now() - t.startedAt; t.running = false; }
+  else if (mode === "reset") { t.running = false; t.accum = 0; }
+  else if (mode === "log") {
+    const mins = Math.round(timerMinutes());
+    if (mins < 1) { toast("Nothing to log yet", "bad"); return; }
+    S.sessions.push({ id: uid(), date: todayStr(), at: Date.now(), subject: t.subject, lecture: t.lecture, mins });
+    t.running = false; t.accum = 0;
+    toast("Logged " + hm(mins) + " → " + subj(t.subject).name + " L" + t.lecture, "good");
+  }
+  save(); render();
+}
+
+/* -------------------------------------------------------------- TASKS */
+function taskHTML(day, t) {
+  const done = taskDone(t);
+  const s = t.subject ? subj(t.subject) : null;
+  let title, sub = "";
+  if (t.type === "lec") {
+    title = '<span style="color:' + s.color + ';font-weight:700">' + esc(s.name) + "</span> " +
+            (t.kind === "revise" ? "revision" : "lectures") + " " +
+            (t.lecs.length ? "L" + t.lecs[0] + (t.lecs.length > 1 ? "–L" + t.lecs[t.lecs.length - 1] : "") : "");
+    const f = t.kind === "revise" ? "r" : "w";
+    const n = t.lecs.filter(x => lpeek(t.subject, x)[f]).length;
+    sub = n + "/" + t.lecs.length + " done · ~" + (t.lecs.length * (S.prefs.hoursPerLec || 2)) + "h raw · " + S.prefs.speed + "× ≈ " +
+          hm(t.lecs.length * (S.prefs.hoursPerLec || 2) * 60 / (S.prefs.speed || 1));
+  } else {
+    title = esc(t.text);
+  }
+  let pills = "";
+  if (t.type === "lec") {
+    const f = t.kind === "revise" ? "r" : "w";
+    pills = '<div class="lecpills">' + t.lecs.map(n =>
+      '<button class="pill ' + (lpeek(t.subject, n)[f] ? "on" : "") + '" data-act="pill" data-day="' + day.date +
+      '" data-task="' + t.id + '" data-n="' + n + '" title="Click: toggle · Shift-click: open lecture">L' + n + "</button>").join("") + "</div>";
+  }
+  return '<div class="task ' + (done ? "done" : "") + '">' +
+    '<button class="cb" data-act="task" data-day="' + day.date + '" data-task="' + t.id + '" aria-label="toggle">✓</button>' +
+    '<div class="tmain"><div class="tt">' + title + ' <span class="kind ' + (t.kind || "task") + '">' + esc(t.kind || "task") + "</span></div>" +
+    (sub ? '<div class="ts">' + sub + "</div>" : "") + pills + "</div>" +
+    '<button class="btn xs ghost noprint" data-act="editTask" data-day="' + day.date + '" data-task="' + t.id + '" title="Edit">✎</button>' +
+  "</div>";
+}
+
+function toggleTask(date, tid) {
+  const d = S.days.find(x => x.date === date); if (!d) return;
+  const t = d.tasks.find(x => x.id === tid); if (!t) return;
+  if (t.type === "lec") {
+    const f = t.kind === "revise" ? "r" : "w";
+    const all = t.lecs.every(n => lpeek(t.subject, n)[f]);
+    t.lecs.forEach(n => { lrec(t.subject, n)[f] = all ? 0 : 1; });
+  } else t.done = !t.done;
+  save(); render();
+}
+
+/* -------------------------------------------------------------- PLAN */
+let planFilter = "all";
+function viewPlan() {
+  const t = todayStr();
+  let days = S.days.slice().sort((a, b) => a.date.localeCompare(b.date));
+  if (planFilter === "left") days = days.filter(d => d.date >= t);
+  if (planFilter === "open") days = days.filter(d => dayProgress(d).done < d.tasks.length);
+
+  let h = '<div class="sec-title"><h2>Full plan</h2><div class="line"></div>' +
+    '<div class="row noprint" style="gap:6px">' +
+      ["all:All", "left:From today", "open:Unfinished"].map(o => {
+        const [k, lab] = o.split(":");
+        return '<button class="btn xs ' + (planFilter === k ? "primary" : "ghost") + '" data-act="planFilter" data-f="' + k + '">' + lab + "</button>";
+      }).join("") +
+      '<button class="btn xs" data-act="addDay">+ Day</button>' +
+      '<button class="btn xs ghost" data-act="expandAll">Expand all</button>' +
+    "</div></div>";
+
+  if (!days.length) return h + '<div class="empty"><div class="big">🗓</div>Nothing here.</div>';
+
+  h += days.map(d => {
+    const pr = dayProgress(d);
+    const isToday = d.date === t, past = d.date < t;
+    const hasExam = d.tasks.some(x => x.type === "exam");
+    /* untouched days: fold away only the past days you already finished */
+    const cst = S.prefs.collapsed[d.date];
+    const collapsed = cst === undefined ? (past && pr.pct === 100) : cst === true;
+    return '<div class="day ' + (isToday ? "today " : "") + (past && !isToday ? "past " : "") + (hasExam ? "exam" : "") + '">' +
+      '<div class="dayhead" data-act="dayToggle" data-date="' + d.date + '">' +
+        '<span class="date">' + fmtDay(d.date) + "</span>" +
+        '<span class="dow">' + dowOf(d.date) + "</span>" +
+        '<span class="ttl">' + esc(d.title) + "</span>" +
+        (isToday ? '<span class="chip" style="border-color:var(--accent);color:var(--accent)">TODAY</span>' : "") +
+        (hasExam ? '<span class="chip" style="border-color:var(--red);color:var(--red)">EXAM</span>' : "") +
+        '<div class="prog"><span class="tiny muted2 num">' + pr.done + "/" + pr.total + "</span>" +
+          '<div class="minibar"><i style="width:' + pr.pct + '%"></i></div>' +
+          '<span class="muted2" style="font-size:11px">' + (collapsed ? "▸" : "▾") + "</span></div>" +
+      "</div>" +
+      (collapsed ? "" : '<div class="daybody">' + d.tasks.map(tk => taskHTML(d, tk)).join("") +
+        '<div class="row noprint" style="margin-top:10px;gap:6px">' +
+          '<button class="btn xs" data-act="addTask" data-date="' + d.date + '">+ Task</button>' +
+          '<button class="btn xs ghost" data-act="editDay" data-date="' + d.date + '">Edit day</button>' +
+          '<button class="btn xs ghost danger" data-act="delDay" data-date="' + d.date + '">Delete day</button>' +
+        "</div></div>") +
+    "</div>";
+  }).join("");
+  return h;
+}
+/* =====================================================================
+   VIEWS — subjects, index, stats, setup
+   ===================================================================== */
+let subjFilter = "all";
+
+function viewSubjects() {
+  let h = '<div class="sec-title"><h2>Lecture tracker</h2><div class="line"></div>' +
+    '<div class="row noprint" style="gap:6px">' +
+      ["all:All", "todo:Not watched", "weak:🔴 Weak", "noidx:Not indexed"].map(o => {
+        const [k, lab] = o.split(":");
+        return '<button class="btn xs ' + (subjFilter === k ? "primary" : "ghost") + '" data-act="subjFilter" data-f="' + k + '">' + lab + "</button>";
+      }).join("") + "</div></div>";
+
+  h += S.subjects.map(s => {
+    const st = subjStats(s), ex = examStatus(s);
+    let cells = "";
+    for (let n = 1; n <= s.lectures; n++) {
+      const L = lpeek(s.id, n);
+      if (subjFilter === "todo" && L.w) continue;
+      if (subjFilter === "weak" && L.rag !== "weak") continue;
+      if (subjFilter === "noidx" && L.i) continue;
+      cells += '<div class="lec ' + (L.w ? "watched" : "") + '" data-rag="' + (L.rag || "") + '" data-act="lec" data-s="' + s.id + '" data-n="' + n + '" ' +
+        'title="Click to open · Shift-click marks watched">' +
+        (L.note && L.note.trim() ? '<span class="note-flag">📝</span>' : "") +
+        '<div class="n">L' + n + "</div>" +
+        '<div class="dots"><i class="' + (L.w ? "on" : "") + '"></i><i class="idx ' + (L.i ? "on" : "") + '"></i><i class="rev ' + (L.r ? "on" : "") + '"></i></div>' +
+      "</div>";
+    }
+    if (!cells) cells = '<div class="muted2 tiny" style="padding:8px">Nothing matches this filter.</div>';
+
+    return '<div class="subjblock" style="--c:' + s.color + '">' +
+      '<div class="subjhead">' +
+        '<span class="tag">' + esc(s.name) + "</span>" +
+        '<span class="tiny muted">' + esc(s.full) + "</span>" +
+        '<span class="chip"' + (ex.past ? "" : ' style="border-color:' + s.color + '"') + ">" + fmtDT(s.exam) + "</span>" +
+        '<span class="spacer"></span>' +
+        '<span class="tiny muted2 num">' + st.w + "/" + st.tot + " watched · " + st.r + " revised · " + st.i + " indexed</span>" +
+        '<div class="minibar" style="width:110px"><i style="width:' + st.pct + '%;background:' + s.color + '"></i></div>' +
+      "</div>" +
+      '<div class="subjbody"><div class="lgrid">' + cells + "</div>" +
+        '<div class="legend"><span><i style="background:var(--green)"></i>watched</span>' +
+          '<span><i style="background:var(--blue)"></i>indexed</span>' +
+          '<span><i style="background:var(--accent2)"></i>revised</span>' +
+          '<span><i style="background:var(--green)"></i>🟢 ' + st.strong + "</span>" +
+          '<span><i style="background:var(--amber)"></i>🟡 ' + st.medium + "</span>" +
+          '<span><i style="background:var(--red)"></i>🔴 ' + st.weak + "</span>" +
+          '<span class="spacer"></span></div>' +
+        '<div class="row noprint" style="margin-top:12px;gap:6px">' +
+          '<button class="btn xs" data-act="bulk" data-s="' + s.id + '" data-k="w">Mark all watched</button>' +
+          '<button class="btn xs" data-act="bulk" data-s="' + s.id + '" data-k="r">Mark all revised</button>' +
+          '<button class="btn xs ghost" data-act="bulk" data-s="' + s.id + '" data-k="clear">Clear subject</button>' +
+          '<button class="btn xs ghost" data-act="addIndex" data-s="' + s.id + '">+ Index entry</button>' +
+        "</div>" +
+      "</div></div>";
+  }).join("");
+  return h;
+}
+
+/* -------------------------------------------------------- MASTER INDEX */
+let idxQuery = "", idxSubj = "all", idxSort = "subject";
+function filteredIndex() {
+  const q = idxQuery.trim().toLowerCase();
+  let rows = S.index.slice();
+  if (idxSubj !== "all") rows = rows.filter(r => r.subject === idxSubj);
+  if (q) rows = rows.filter(r => (r.topic + " " + r.ref + " " + r.formula + " " + (r.tags || "") + " " + subj(r.subject).name)
+    .toLowerCase().includes(q));
+  const ord = { weak: 0, medium: 1, strong: 2, "": 3 };
+  rows.sort((a, b) =>
+    idxSort === "topic"   ? a.topic.localeCompare(b.topic) :
+    idxSort === "pri"     ? (ord[a.pri || ""] - ord[b.pri || ""]) || a.topic.localeCompare(b.topic) :
+    idxSort === "lecture" ? (a.subject.localeCompare(b.subject) || (a.lecture - b.lecture)) :
+    (a.subject.localeCompare(b.subject) || a.topic.localeCompare(b.topic)));
+  return rows;
+}
+function viewIndex() {
+  const rows = filteredIndex();
+  let h = '<div class="sec-title"><h2>SEMESTER OPEN-BOOK MASTER INDEX</h2><div class="line"></div>' +
+    '<span class="chip">' + S.index.length + " entries</span></div>";
+
+  h += '<div class="card pad noprint" style="margin-bottom:14px"><div class="row">' +
+    '<input type="text" id="idxQ" placeholder="Search topic, keyword, formula, reference…   (press /)" value="' + esc(idxQuery) + '" style="flex:1;min-width:220px" />' +
+    '<select id="idxS" style="width:auto"><option value="all">All subjects</option>' +
+      S.subjects.map(s => '<option value="' + s.id + '"' + (idxSubj === s.id ? " selected" : "") + ">" + esc(s.name) + "</option>").join("") + "</select>" +
+    '<select id="idxSort" style="width:auto">' +
+      [["subject","Sort: subject"],["topic","Sort: topic"],["lecture","Sort: lecture"],["pri","Sort: weak first"]]
+      .map(o => '<option value="' + o[0] + '"' + (idxSort === o[0] ? " selected" : "") + ">" + o[1] + "</option>").join("") + "</select>" +
+    '<button class="btn primary" data-act="addIndex">+ Entry <kbd style="opacity:.6;font-size:10px">n</kbd></button>' +
+    '<button class="btn ghost sm" data-act="exportMd">Markdown</button>' +
+    '<button class="btn ghost sm" data-act="exportCsv">CSV</button>' +
+    '<button class="btn ghost sm" data-act="print">Print</button>' +
+  "</div>" +
+  '<div class="tiny muted2" style="margin-top:9px">Format: <span class="mono">Topic → Subject → Lecture → Page/Timestamp → Formula/Algorithm</span>. ' +
+  "Index while you watch — it is the whole point of an open-book exam.</div></div>";
+
+  if (!rows.length) {
+    h += '<div class="empty"><div class="big">🔎</div>' +
+      (S.index.length ? "No entries match this filter." : "No index entries yet. Add one for every formula, algorithm and worked example you meet.") +
+      '<div style="margin-top:12px"><button class="btn sm primary" data-act="addIndex">+ Add first entry</button></div></div>';
+    return h;
+  }
+
+  h += '<div class="tblwrap"><table class="tbl"><thead><tr>' +
+    "<th>Topic / keyword</th><th>Subject</th><th>Lec</th><th>Page / timestamp</th><th>Formula / algorithm</th><th>Flag</th><th class=noprint></th>" +
+    "</tr></thead><tbody>" +
+    rows.map(r => {
+      const s = subj(r.subject);
+      const flag = r.pri === "weak" ? "🔴" : r.pri === "medium" ? "🟡" : r.pri === "strong" ? "🟢" : "—";
+      return "<tr>" +
+        "<td><b>" + esc(r.topic) + "</b>" + (r.tags ? '<div class="tiny muted2">' + esc(r.tags) + "</div>" : "") + "</td>" +
+        '<td><span class="subjdot" style="color:' + s.color + '"><i style="background:' + s.color + '"></i>' + esc(s.name) + "</span></td>" +
+        '<td class="mono">' + (r.lecture ? "L" + r.lecture : "—") + "</td>" +
+        '<td class="ref">' + esc(r.ref || "—") + "</td>" +
+        '<td class="frm">' + esc(r.formula || "—") + "</td>" +
+        '<td style="text-align:center">' + flag + "</td>" +
+        '<td class="noprint" style="white-space:nowrap">' +
+          '<button class="btn xs ghost" data-act="editIndex" data-id="' + r.id + '">✎</button>' +
+          '<button class="btn xs ghost danger" data-act="delIndex" data-id="' + r.id + '">✕</button></td>' +
+      "</tr>";
+    }).join("") + "</tbody></table></div>";
+  return h;
+}
+
+/* -------------------------------------------------------------- STATS */
+function viewStats() {
+  const o = overall();
+  let h = '<div class="sec-title"><h2>Progress</h2><div class="line"></div></div>';
+
+  h += '<div class="rings">' + S.subjects.map(s => {
+    const st = subjStats(s);
+    return '<div class="ring">' + ring(st.pct, s.color) +
+      '<div class="lbl" style="color:' + s.color + '">' + esc(s.name) + "</div>" +
+      '<div class="sub">' + st.w + "/" + st.tot + " watched<br>" + st.r + " revised · " + st.idxCount + " indexed</div></div>";
+  }).join("") +
+  '<div class="ring">' + ring(o.pct, "var(--accent)") +
+    '<div class="lbl">OVERALL</div><div class="sub">' + o.w + "/" + o.tot + " lectures<br>" + hm(o.mins) + " logged</div></div>" +
+  "</div>";
+
+  /* confidence bars */
+  h += '<div class="sec-title"><h2>Confidence map</h2><div class="line"></div></div><div class="card pad">' +
+    S.subjects.map(s => {
+      const st = subjStats(s), tot = st.tot || 1;
+      const seg = (n, c) => n ? '<i style="display:block;height:100%;width:' + (n / tot * 100) + '%;background:' + c + '"></i>' : "";
+      const none = tot - st.strong - st.medium - st.weak;
+      return '<div style="margin-bottom:12px"><div class="row tiny" style="margin-bottom:5px">' +
+        '<b style="color:' + s.color + '">' + esc(s.name) + '</b><span class="spacer"></span>' +
+        '<span class="muted2">🟢 ' + st.strong + " · 🟡 " + st.medium + " · 🔴 " + st.weak + " · unrated " + none + "</span></div>" +
+        '<div style="display:flex;height:9px;border-radius:99px;overflow:hidden;background:var(--line)">' +
+          seg(st.strong, "var(--green)") + seg(st.medium, "var(--amber)") + seg(st.weak, "var(--red)") + "</div></div>";
+    }).join("") + "</div>";
+
+  /* daily minutes */
+  const last = [];
+  for (let i = 20; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); last.push(ymd(d)); }
+  const max = Math.max(S.prefs.dailyGoalMin || 300, ...last.map(minutesOn));
+  h += '<div class="sec-title"><h2>Study log — last 21 days</h2><div class="line"></div>' +
+    '<span class="chip">' + hm(S.sessions.reduce((a, s) => a + s.mins, 0)) + " total</span></div>" +
+    '<div class="card pad"><div style="display:flex;align-items:flex-end;gap:4px;height:110px">' +
+    last.map(d => {
+      const m = minutesOn(d), pct = max ? m / max * 100 : 0;
+      return '<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%" title="' + d + " — " + hm(m) + '">' +
+        '<div style="min-height:3px;height:' + Math.max(2, pct) + "%;border-radius:4px 4px 0 0;background:" +
+        (m >= (S.prefs.dailyGoalMin || 300) ? "var(--green)" : m ? "var(--accent)" : "var(--line2)") + '"></div></div>';
+    }).join("") + "</div>" +
+    '<div class="row tiny muted2" style="margin-top:7px"><span>' + fmtDay(last[0]) + '</span><span class="spacer"></span><span>today</span></div></div>';
+
+  /* sessions */
+  const rec = S.sessions.slice().sort((a, b) => b.at - a.at).slice(0, 14);
+  h += '<div class="sec-title"><h2>Recent sessions</h2><div class="line"></div></div><div class="card pad">';
+  h += rec.length ? rec.map(x => {
+    const s = subj(x.subject);
+    return '<div class="row" style="padding:7px 0;border-bottom:1px dashed var(--line)">' +
+      '<span class="mono tiny" style="min-width:56px">' + fmtDay(x.date) + "</span>" +
+      '<span class="subjdot" style="color:' + s.color + '"><i style="background:' + s.color + '"></i>' + esc(s.name) + "</span>" +
+      '<span class="mono tiny muted">L' + x.lecture + "</span>" +
+      '<span class="spacer"></span><span class="num tiny"><b>' + hm(x.mins) + "</b></span>" +
+      '<button class="btn xs ghost danger noprint" data-act="delSession" data-id="' + x.id + '">✕</button></div>';
+  }).join("") : '<div class="muted2 tiny">No sessions logged yet — use the timer on the Today tab.</div>';
+  h += '<div class="row" style="margin-top:11px"><button class="btn sm ghost" data-act="addSession">+ Log time manually</button></div></div>';
+  return h;
+}
+
+/* -------------------------------------------------------------- SETUP */
+function viewSetup() {
+  let h = '<div class="sec-title"><h2>Subjects &amp; exams</h2><div class="line"></div>' +
+    '<button class="btn xs" data-act="addSubject">+ Subject</button></div>';
+
+  h += '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">' +
+    S.subjects.map((s, i) =>
+      '<div class="card pad" style="border-left:3px solid ' + s.color + '">' +
+        '<div class="grid" style="grid-template-columns:1fr 1fr;gap:10px">' +
+          '<label class="fld"><span>Code</span><input type="text" data-sf="name" data-i="' + i + '" value="' + esc(s.name) + '" /></label>' +
+          '<label class="fld"><span>Colour</span><input type="text" data-sf="color" data-i="' + i + '" value="' + esc(s.color) + '" /></label>' +
+        "</div>" +
+        '<label class="fld" style="margin-top:10px"><span>Full name</span><input type="text" data-sf="full" data-i="' + i + '" value="' + esc(s.full || "") + '" /></label>' +
+        '<div class="grid" style="grid-template-columns:1fr 110px;gap:10px;margin-top:10px">' +
+          '<label class="fld"><span>Exam date &amp; time</span><input type="datetime-local" data-sf="exam" data-i="' + i + '" value="' + esc(s.exam) + '" /></label>' +
+          '<label class="fld"><span>Lectures</span><input type="number" min="1" max="99" data-sf="lectures" data-i="' + i + '" value="' + s.lectures + '" /></label>' +
+        "</div>" +
+        '<div class="row" style="margin-top:11px"><span class="tiny muted2">' + subjStats(s).w + "/" + s.lectures + " watched</span>" +
+        '<span class="spacer"></span><button class="btn xs ghost danger" data-act="delSubject" data-i="' + i + '">Remove</button></div>' +
+      "</div>").join("") + "</div>";
+
+  h += '<div class="sec-title"><h2>Preferences</h2><div class="line"></div></div>' +
+    '<div class="card pad"><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">' +
+      '<label class="fld"><span>Planner title</span><input type="text" data-pf="title" value="' + esc(S.title) + '" /></label>' +
+      '<label class="fld"><span>Subtitle</span><input type="text" data-pf="subtitle" value="' + esc(S.subtitle) + '" /></label>' +
+      '<label class="fld"><span>Playback speed ×</span><input type="number" step="0.25" min="1" max="3" data-pf="speed" value="' + S.prefs.speed + '" /></label>' +
+      '<label class="fld"><span>Hours per lecture</span><input type="number" step="0.25" min="0.25" max="8" data-pf="hoursPerLec" value="' + S.prefs.hoursPerLec + '" /></label>' +
+      '<label class="fld"><span>Daily goal (minutes)</span><input type="number" step="15" min="30" max="960" data-pf="dailyGoalMin" value="' + S.prefs.dailyGoalMin + '" /></label>' +
+    "</div>" +
+    '<div class="tiny muted2" style="margin-top:10px">Watch difficult lectures at 1.25–1.5×, easy or repetitive sections at 1.5–2×. ' +
+    "At " + S.prefs.speed + "× the remaining " + paceInfo().left + " lectures take about <b>" +
+    hm(paceInfo().left * S.prefs.hoursPerLec * 60 / (S.prefs.speed || 1)) + "</b> of viewing.</div></div>";
+
+  h += '<div class="sec-title"><h2>Data</h2><div class="line"></div></div>' +
+    '<div class="card pad"><div class="row">' +
+      '<button class="btn primary" data-act="exportJson">⬇ Export backup (.json)</button>' +
+      '<button class="btn" data-act="importJson">⬆ Import backup</button>' +
+      '<button class="btn" data-act="exportMd">Export index (.md)</button>' +
+      '<button class="btn ghost" data-act="print">Print / PDF</button>' +
+      '<span class="spacer"></span>' +
+      '<button class="btn ghost danger" data-act="resetProgress">Reset progress</button>' +
+      '<button class="btn ghost danger" data-act="resetAll">Reset everything</button>' +
+    "</div>" +
+    '<div class="tiny muted2" style="margin-top:11px">Everything lives in this browser\'s localStorage — nothing is sent anywhere. ' +
+    "Export a backup before switching device or clearing browsing data. Last saved: <span class=\"mono\">" + new Date().toLocaleTimeString() + "</span></div></div>";
+  return h;
+}
+/* =====================================================================
+   MODALS
+   ===================================================================== */
+function lectureModal(sid, n) {
+  const s = subj(sid), L = lrec(sid, n);
+  const cbox = (f, lab, col) =>
+    '<label class="row" style="gap:8px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;cursor:pointer;background:var(--bg2)">' +
+    '<input type="checkbox" id="lf_' + f + '" ' + (L[f] ? "checked" : "") + ' style="width:auto;accent-color:' + col + '" />' +
+    "<b style=\"font-size:13px\">" + lab + "</b></label>";
+
+  modal({
+    title: '<span style="color:' + s.color + '">' + esc(s.name) + "</span> · Lecture " + n,
+    body:
+      '<div class="grid" style="grid-template-columns:repeat(3,1fr)">' +
+        cbox("w", "Watched", "var(--green)") + cbox("i", "Indexed", "var(--blue)") + cbox("r", "Revised", "var(--accent2)") +
+      "</div>" +
+      '<div class="grid" style="grid-template-columns:1fr 130px;gap:12px;margin-top:14px">' +
+        '<label class="fld"><span>Confidence</span><select id="lf_rag">' +
+          [["","— not rated —"],["strong","🟢 Strong"],["medium","🟡 Needs revision"],["weak","🔴 Weak"]]
+          .map(o => '<option value="' + o[0] + '"' + (L.rag === o[0] ? " selected" : "") + ">" + o[1] + "</option>").join("") +
+        "</select></label>" +
+        '<label class="fld"><span>Log extra minutes</span><input type="number" min="0" step="5" id="lf_mins" value="0" title="Adds a session to the study log" /></label>' +
+      "</div>" +
+      '<label class="fld" style="margin-top:14px"><span>Notes — key concepts · formulas · algorithms · examples · timestamps</span>' +
+      '<textarea id="lf_note" placeholder="Key concepts:&#10;Formulas:&#10;Algorithms:&#10;Worked examples:&#10;Timestamp / page + keywords:" style="min-height:170px">' +
+      esc(L.note || "") + "</textarea></label>" +
+      '<div class="row" style="margin-top:12px"><button class="btn sm" id="lf_idx">+ Add index entry from this lecture</button>' +
+      '<span class="spacer"></span><span class="tiny muted2">' + hm(lecMins(sid, n)) + " logged · " + (S.index.filter(e => e.subject === sid && e.lecture === n).length) + " index entries</span></div>",
+    footer:
+      '<button class="btn ghost" id="lf_prev">← L' + (n > 1 ? n - 1 : s.lectures) + "</button>" +
+      '<button class="btn ghost" id="lf_next">L' + (n < s.lectures ? n + 1 : 1) + " →</button>" +
+      '<span style="flex:1"></span><button class="btn primary" id="lf_save">Save</button>',
+    onMount(close) {
+      const grab = () => {
+        L.w = $("#lf_w").checked ? 1 : 0;
+        L.i = $("#lf_i").checked ? 1 : 0;
+        L.r = $("#lf_r").checked ? 1 : 0;
+        L.rag = $("#lf_rag").value;
+        const extra = Math.max(0, parseInt($("#lf_mins").value || "0", 10) || 0);
+        if (extra) { S.sessions.push({ id: uid(), date: todayStr(), at: Date.now(), subject: sid, lecture: n, mins: extra }); $("#lf_mins").value = 0; }
+        L.note = $("#lf_note").value;
+        save(true);
+      };
+      $("#lf_save").onclick = () => { grab(); close(); render(); toast("Saved " + s.name + " L" + n, "good"); };
+      $("#lf_prev").onclick = () => { grab(); close(); lectureModal(sid, n > 1 ? n - 1 : s.lectures); };
+      $("#lf_next").onclick = () => { grab(); close(); lectureModal(sid, n < s.lectures ? n + 1 : 1); };
+      $("#lf_idx").onclick  = () => { grab(); close(); indexModal(null, { subject: sid, lecture: n }); };
+      $("#lf_note").focus();
+    },
+  });
+}
+
+function indexModal(id, seed) {
+  const e = id ? S.index.find(x => x.id === id) : Object.assign(
+    { id: uid(), topic: "", subject: S.subjects[0].id, lecture: "", ref: "", formula: "", tags: "", pri: "" }, seed || {});
+  modal({
+    title: id ? "Edit index entry" : "New index entry",
+    body:
+      '<label class="fld"><span>Topic / keyword you would actually search for</span>' +
+      '<input type="text" id="ix_topic" value="' + esc(e.topic) + '" placeholder="e.g. Viterbi algorithm, TF-IDF weighting, Bellman equation" /></label>' +
+      '<div class="grid" style="grid-template-columns:1fr 110px 1fr;gap:12px;margin-top:12px">' +
+        '<label class="fld"><span>Subject</span><select id="ix_subj">' + S.subjects.map(s =>
+          '<option value="' + s.id + '"' + (e.subject === s.id ? " selected" : "") + ">" + esc(s.name) + "</option>").join("") + "</select></label>" +
+        '<label class="fld"><span>Lecture</span><input type="number" min="1" id="ix_lec" value="' + esc(e.lecture) + '" /></label>' +
+        '<label class="fld"><span>Page / timestamp</span><input type="text" id="ix_ref" value="' + esc(e.ref) + '" placeholder="p.42 · 00:18:30 · slide 12" /></label>' +
+      "</div>" +
+      '<label class="fld" style="margin-top:12px"><span>Formula / algorithm / one-line answer</span>' +
+      '<textarea id="ix_formula" style="min-height:90px" placeholder="The thing you need in the exam, written so you can use it without rewatching.">' + esc(e.formula) + "</textarea></label>" +
+      '<div class="grid" style="grid-template-columns:1fr 190px;gap:12px;margin-top:12px">' +
+        '<label class="fld"><span>Extra keywords / aliases</span><input type="text" id="ix_tags" value="' + esc(e.tags || "") + '" placeholder="synonyms the paper might use" /></label>' +
+        '<label class="fld"><span>Flag</span><select id="ix_pri">' +
+          [["","— none —"],["strong","🟢 Strong"],["medium","🟡 Needs revision"],["weak","🔴 Weak"]]
+          .map(o => '<option value="' + o[0] + '"' + (e.pri === o[0] ? " selected" : "") + ">" + o[1] + "</option>").join("") + "</select></label>" +
+      "</div>",
+    footer: (id ? '<button class="btn ghost danger" id="ix_del">Delete</button>' : "") +
+      '<span style="flex:1"></span><button class="btn ghost" id="ix_cancel">Cancel</button><button class="btn primary" id="ix_save">Save entry</button>',
+    onMount(close) {
+      $("#ix_topic").focus();
+      $("#ix_cancel").onclick = close;
+      if (id) $("#ix_del").onclick = () => { S.index = S.index.filter(x => x.id !== id); save(true); close(); render(); toast("Entry deleted"); };
+      const doSave = () => {
+        const topic = $("#ix_topic").value.trim();
+        if (!topic) { toast("Give it a topic first", "bad"); return; }
+        const rec = { id: e.id, topic, subject: $("#ix_subj").value,
+          lecture: parseInt($("#ix_lec").value || "0", 10) || "",
+          ref: $("#ix_ref").value.trim(), formula: $("#ix_formula").value.trim(),
+          tags: $("#ix_tags").value.trim(), pri: $("#ix_pri").value };
+        if (id) S.index = S.index.map(x => x.id === id ? rec : x); else S.index.push(rec);
+        if (rec.lecture) lrec(rec.subject, rec.lecture).i = 1;
+        save(true); close(); render(); toast(id ? "Entry updated" : "Entry added", "good");
+      };
+      $("#ix_save").onclick = doSave;
+      $("#ix_topic").onkeydown = ev => { if (ev.key === "Enter") doSave(); };
+    },
+  });
+}
+
+function taskModal(date, tid) {
+  const d = S.days.find(x => x.date === date); if (!d) return;
+  const t = tid ? d.tasks.find(x => x.id === tid)
+                : { id: uid(), type: "todo", kind: "task", text: "", subject: S.subjects[0].id, lecs: [], done: false };
+  const from = t.lecs && t.lecs.length ? t.lecs[0] : 1;
+  const to   = t.lecs && t.lecs.length ? t.lecs[t.lecs.length - 1] : 1;
+  modal({
+    title: tid ? "Edit task — " + fmtDay(date) : "New task — " + fmtDay(date),
+    body:
+      '<label class="fld"><span>Type</span><select id="tk_type">' +
+        [["lec","Lecture block"],["todo","To-do"],["exam","Exam"]].map(o =>
+          '<option value="' + o[0] + '"' + (t.type === o[0] ? " selected" : "") + ">" + o[1] + "</option>").join("") + "</select></label>" +
+      '<div id="tk_lecbox" class="grid" style="grid-template-columns:1fr 90px 90px;gap:12px;margin-top:12px">' +
+        '<label class="fld"><span>Subject</span><select id="tk_subj">' + S.subjects.map(s =>
+          '<option value="' + s.id + '"' + (t.subject === s.id ? " selected" : "") + ">" + esc(s.name) + "</option>").join("") + "</select></label>" +
+        '<label class="fld"><span>From L</span><input type="number" min="1" id="tk_from" value="' + from + '" /></label>' +
+        '<label class="fld"><span>To L</span><input type="number" min="1" id="tk_to" value="' + to + '" /></label>' +
+      "</div>" +
+      '<div class="grid" style="grid-template-columns:1fr 170px;gap:12px;margin-top:12px">' +
+        '<label class="fld"><span>Label</span><input type="text" id="tk_text" value="' + esc(t.text || "") + '" placeholder="What exactly gets done" /></label>' +
+        '<label class="fld"><span>Kind</span><select id="tk_kind">' +
+          [["watch","watch"],["revise","revise"],["task","task"],["rest","rest"],["exam","exam"]].map(o =>
+            '<option value="' + o[0] + '"' + (t.kind === o[0] ? " selected" : "") + ">" + o[1] + "</option>").join("") + "</select></label>" +
+      "</div>",
+    footer: (tid ? '<button class="btn ghost danger" id="tk_del">Delete</button>' : "") +
+      '<span style="flex:1"></span><button class="btn ghost" id="tk_cancel">Cancel</button><button class="btn primary" id="tk_save">Save</button>',
+    onMount(close) {
+      const sync = () => { $("#tk_lecbox").style.display = $("#tk_type").value === "lec" ? "grid" : "none"; };
+      $("#tk_type").onchange = sync; sync();
+      $("#tk_cancel").onclick = close;
+      if (tid) $("#tk_del").onclick = () => { d.tasks = d.tasks.filter(x => x.id !== tid); save(true); close(); render(); toast("Task removed"); };
+      $("#tk_save").onclick = () => {
+        const type = $("#tk_type").value;
+        const rec = { id: t.id, type, kind: $("#tk_kind").value, text: $("#tk_text").value.trim(), done: !!t.done };
+        if (type === "lec" || type === "exam") rec.subject = $("#tk_subj").value;
+        if (type === "lec") {
+          const a = clamp(parseInt($("#tk_from").value || "1", 10) || 1, 1, 99);
+          const b = clamp(parseInt($("#tk_to").value || "1", 10) || 1, a, 99);
+          rec.lecs = range(a, b);
+          if (!["watch","revise"].includes(rec.kind)) rec.kind = "watch";
+        }
+        if (type !== "lec" && !rec.text) { toast("Give the task a label", "bad"); return; }
+        if (tid) d.tasks = d.tasks.map(x => x.id === tid ? rec : x); else d.tasks.push(rec);
+        save(true); close(); render(); toast("Saved", "good");
+      };
+    },
+  });
+}
+
+function dayModal(date) {
+  const existing = date ? S.days.find(d => d.date === date) : null;
+  const d = existing || { date: date || todayStr(), title: "", phase: "custom", tasks: [] };
+  modal({
+    title: existing ? "Edit day" : "Add day",
+    body: '<div class="grid" style="grid-template-columns:180px 1fr;gap:12px">' +
+      '<label class="fld"><span>Date</span><input type="date" id="dy_date" value="' + d.date + '" /></label>' +
+      '<label class="fld"><span>Title</span><input type="text" id="dy_title" value="' + esc(d.title) + '" placeholder="e.g. IR revision + ACI pass" /></label></div>',
+    footer: '<span style="flex:1"></span><button class="btn ghost" id="dy_cancel">Cancel</button><button class="btn primary" id="dy_save">Save</button>',
+    onMount(close) {
+      $("#dy_cancel").onclick = close;
+      $("#dy_save").onclick = () => {
+        const nd = $("#dy_date").value, nt = $("#dy_title").value.trim() || "Study day";
+        if (!nd) { toast("Pick a date", "bad"); return; }
+        if (existing) { existing.date = nd; existing.title = nt; }
+        else {
+          if (S.days.some(x => x.date === nd)) { toast("That day already exists", "bad"); return; }
+          S.days.push({ date: nd, title: nt, phase: "custom", tasks: [] });
+        }
+        S.days.sort((a, b) => a.date.localeCompare(b.date));
+        save(true); close(); render(); toast("Day saved", "good");
+      };
+    },
+  });
+}
+
+function sessionModal() {
+  modal({
+    title: "Log study time",
+    body: '<div class="grid" style="grid-template-columns:1fr 90px 110px 130px;gap:12px">' +
+      '<label class="fld"><span>Subject</span><select id="ss_subj">' + S.subjects.map(s =>
+        '<option value="' + s.id + '">' + esc(s.name) + "</option>").join("") + "</select></label>" +
+      '<label class="fld"><span>Lecture</span><input type="number" min="1" id="ss_lec" value="1" /></label>' +
+      '<label class="fld"><span>Minutes</span><input type="number" min="1" step="5" id="ss_min" value="60" /></label>' +
+      '<label class="fld"><span>Date</span><input type="date" id="ss_date" value="' + todayStr() + '" /></label></div>',
+    footer: '<span style="flex:1"></span><button class="btn ghost" id="ss_cancel">Cancel</button><button class="btn primary" id="ss_save">Log it</button>',
+    onMount(close) {
+      $("#ss_cancel").onclick = close;
+      $("#ss_save").onclick = () => {
+        const mins = Math.max(1, parseInt($("#ss_min").value || "0", 10) || 0);
+        const sid = $("#ss_subj").value, lec = Math.max(1, parseInt($("#ss_lec").value || "1", 10) || 1);
+        S.sessions.push({ id: uid(), date: $("#ss_date").value, at: Date.now(), subject: sid, lecture: lec, mins });
+        save(true); close(); render(); toast("Logged " + hm(mins), "good");
+      };
+    },
+  });
+}
+
+function helpModal() {
+  const k = (a, b) => '<div class="row" style="padding:6px 0;border-bottom:1px dashed var(--line)"><b class="mono" style="min-width:74px">' + a + "</b><span>" + b + "</span></div>";
+  modal({
+    title: "Keyboard shortcuts",
+    body: k("1 … 6", "Switch tab") + k("n", "New master-index entry") + k("/", "Search the index") +
+          k("t", "Start / pause the study timer") + k("l", "Log the current timer session") +
+          k("e", "Expand or collapse all plan days") + k("d", "Toggle dark / light") +
+          k("Ctrl+Z", "Undo the last change") + k("Esc", "Close dialog") + k("?", "This help") +
+      '<div class="tiny muted2" style="margin-top:14px">In the lecture grid: <b>click</b> opens the lecture, <b>shift-click</b> toggles watched. ' +
+      "In a plan day: <b>click a lecture pill</b> to tick that single lecture, <b>shift-click</b> opens it.</div>",
+    footer: '<span style="flex:1"></span><button class="btn primary" id="hp_ok">Got it</button>',
+    onMount(close) { $("#hp_ok").onclick = close; },
+  });
+}
+
+/* =====================================================================
+   IMPORT / EXPORT
+   ===================================================================== */
+function download(name, text, mime) {
+  const b = new Blob([text], { type: mime || "text/plain;charset=utf-8" });
+  const u = URL.createObjectURL(b), a = document.createElement("a");
+  a.href = u; a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(u); a.remove(); }, 500);
+}
+function exportJson() { download("sem2-planner-" + todayStr() + ".json", JSON.stringify(S, null, 2), "application/json"); toast("Backup downloaded", "good"); }
+function exportMd() {
+  let m = "# SEMESTER OPEN-BOOK MASTER INDEX\n\n_Exported " + new Date().toLocaleString() + "_\n\n";
+  S.subjects.forEach(s => {
+    const rows = S.index.filter(e => e.subject === s.id).sort((a, b) => (a.lecture || 0) - (b.lecture || 0));
+    if (!rows.length) return;
+    m += "## " + s.name + " — " + (s.full || "") + "\n\n";
+    m += "| Topic | Lecture | Page/Timestamp | Formula / Algorithm | Flag |\n|---|---|---|---|---|\n";
+    rows.forEach(r => {
+      const flag = r.pri === "weak" ? "🔴" : r.pri === "medium" ? "🟡" : r.pri === "strong" ? "🟢" : "";
+      m += "| " + r.topic + (r.tags ? " _(" + r.tags + ")_" : "") + " | " + (r.lecture ? "L" + r.lecture : "") + " | " +
+           (r.ref || "") + " | " + (r.formula || "").replace(/\n/g, "<br>").replace(/\|/g, "\\|") + " | " + flag + " |\n";
+    });
+    m += "\n";
+  });
+  m += "\n## Lecture notes\n\n";
+  S.subjects.forEach(s => {
+    for (let n = 1; n <= s.lectures; n++) {
+      const L = lpeek(s.id, n);
+      if (!L.note || !L.note.trim()) continue;
+      m += "### " + s.name + " L" + n + (L.rag ? " — " + (L.rag === "weak" ? "🔴" : L.rag === "medium" ? "🟡" : "🟢") : "") + "\n\n" + L.note.trim() + "\n\n";
+    }
+  });
+  download("SEMESTER_OPEN_BOOK_MASTER_INDEX.md", m, "text/markdown;charset=utf-8");
+  toast("Markdown exported", "good");
+}
+function exportCsv() {
+  const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+  const rows = [["Topic","Subject","Lecture","Page/Timestamp","Formula/Algorithm","Keywords","Flag"]]
+    .concat(S.index.map(r => [r.topic, subj(r.subject).name, r.lecture ? "L" + r.lecture : "", r.ref, r.formula, r.tags, r.pri]));
+  download("master-index-" + todayStr() + ".csv", rows.map(r => r.map(q).join(",")).join("\n"), "text/csv;charset=utf-8");
+  toast("CSV exported", "good");
+}
+function importJson() {
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = ".json,application/json";
+  inp.onchange = () => {
+    const f = inp.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try {
+        const p = JSON.parse(rd.result);
+        if (!p || !Array.isArray(p.subjects)) throw new Error("not a planner backup");
+        const d = defaultState();
+        S = { ...d, ...p, prefs: { ...d.prefs, ...(p.prefs || {}) }, timer: { ...d.timer, ...(p.timer || {}) } };
+        S.timer.running = false;
+        save(true); applyTheme(); render(); toast("Backup restored", "good");
+      } catch (e) { toast("Could not read that file", "bad"); }
+    };
+    rd.readAsText(f);
+  };
+  inp.click();
+}
+/* =====================================================================
+   WIRING — delegation, inputs, theme, clock, keyboard, boot
+   ===================================================================== */
+function renderKeepFocus() {
+  const a = document.activeElement;
+  const id = a && a.id, pos = a && a.selectionStart;
+  render();
+  if (id) {
+    const n = document.getElementById(id);
+    if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} }
+  }
+}
+
+const ACTS = {
+  tab(el)        { S.prefs.tab = el.dataset.tab; save(); render(); },
+  planFilter(el) { planFilter = el.dataset.f; render(); },
+  subjFilter(el) { subjFilter = el.dataset.f; render(); },
+  dayToggle(el)  { const d = el.dataset.date; S.prefs.collapsed[d] = !S.prefs.collapsed[d]; save(); render(); },
+  expandAll()    { const any = Object.values(S.prefs.collapsed).some(Boolean);
+                   S.prefs.collapsed = {}; if (!any) S.days.forEach(d => S.prefs.collapsed[d.date] = true); save(); render(); },
+  addDay(el)     { dayModal(el.dataset.date || ""); },
+  editDay(el)    { dayModal(el.dataset.date); },
+  delDay(el)     { const d = el.dataset.date;
+                   confirmBox("Delete " + fmtDay(d) + " and its tasks from the plan?", () => {
+                     S.days = S.days.filter(x => x.date !== d); save(true); render(); toast("Day removed"); }); },
+  addTask(el)    { const d = el.dataset.date;
+                   if (!S.days.some(x => x.date === d)) { S.days.push({ date: d, title: "Study day", phase: "custom", tasks: [] });
+                     S.days.sort((a, b) => a.date.localeCompare(b.date)); save(true); }
+                   taskModal(d, null); },
+  editTask(el)   { taskModal(el.dataset.day, el.dataset.task); },
+  task(el)       { toggleTask(el.dataset.day, el.dataset.task); },
+  pill(el, ev)   { const day = S.days.find(x => x.date === el.dataset.day); if (!day) return;
+                   const t = day.tasks.find(x => x.id === el.dataset.task); if (!t) return;
+                   const n = +el.dataset.n;
+                   if (ev.shiftKey) return lectureModal(t.subject, n);
+                   const f = t.kind === "revise" ? "r" : "w";
+                   const rec = lrec(t.subject, n); rec[f] = rec[f] ? 0 : 1; save(); render(); },
+  lec(el, ev)    { const s = el.dataset.s, n = +el.dataset.n;
+                   if (ev.shiftKey) { const r = lrec(s, n); r.w = r.w ? 0 : 1; save(); render(); }
+                   else lectureModal(s, n); },
+  bulk(el)       { const s = subj(el.dataset.s), k = el.dataset.k;
+                   const apply = () => { for (let n = 1; n <= s.lectures; n++) {
+                       const r = lrec(s.id, n);
+                       if (k === "clear") { r.w = r.i = r.r = 0; r.rag = ""; } else r[k] = 1; }
+                     save(true); render(); toast(k === "clear" ? s.name + " cleared" : s.name + " updated", "good"); };
+                   k === "clear" ? confirmBox("Clear all progress flags for " + s.name + "? Notes and index entries are kept.", apply) : apply(); },
+  addIndex(el)   { indexModal(null, el.dataset.s ? { subject: el.dataset.s } : null); },
+  editIndex(el)  { indexModal(el.dataset.id); },
+  delIndex(el)   { S.index = S.index.filter(x => x.id !== el.dataset.id); save(true); render(); toast("Entry deleted"); },
+  addSession()   { sessionModal(); },
+  delSession(el) { S.sessions = S.sessions.filter(x => x.id !== el.dataset.id); save(true); render(); },
+  timer(el)      { timerAction(el.dataset.mode); },
+  addSubject()   { const n = S.subjects.length + 1;
+                   S.subjects.push({ id: "sub" + uid(), name: "SUB" + n, full: "New subject",
+                     color: ["#c084fc","#22d3ee","#fbbf24","#f472b6"][n % 4], exam: todayStr() + "T09:00", lectures: 16 });
+                   save(true); render(); },
+  delSubject(el) { const i = +el.dataset.i, s = S.subjects[i];
+                   confirmBox("Remove " + s.name + "? Its lectures, index entries and sessions stay in the backup but disappear from view.", () => {
+                     S.subjects.splice(i, 1); save(true); render(); }); },
+  exportJson, importJson, exportMd, exportCsv,
+  print()        { window.print(); },
+  resetProgress(){ confirmBox("Reset every watched / indexed / revised flag, confidence rating and logged session? Notes and the master index are kept.", () => {
+                     Object.values(S.lec).forEach(L => { L.w = L.i = L.r = 0; L.rag = ""; L.mins = 0; });
+                     S.days.forEach(d => d.tasks.forEach(t => t.done = false));
+                     S.sessions = []; save(true); render(); toast("Progress reset"); }); },
+  resetAll()     { confirmBox("Wipe EVERYTHING and restore the original plan — notes, index, sessions, custom days. Export a backup first if unsure.", () => {
+                     S = defaultState(); save(true); applyTheme(); render(); toast("Restored to the original plan"); }); },
+};
+
+document.addEventListener("click", ev => {
+  const el = ev.target.closest("[data-act]");
+  if (!el) return;
+  const fn = ACTS[el.dataset.act];
+  if (!fn) return;
+  ev.preventDefault();
+  fn(el, ev);
+});
+
+/* ---------- per-render input bindings ---------- */
+function afterRender() {
+  const q = $("#idxQ");
+  if (q) {
+    let t;
+    q.oninput = () => { clearTimeout(t); t = setTimeout(() => { idxQuery = q.value; renderKeepFocus(); }, 140); };
+  }
+  const s = $("#idxS");    if (s) s.onchange = () => { idxSubj = s.value; render(); };
+  const so = $("#idxSort"); if (so) so.onchange = () => { idxSort = so.value; render(); };
+
+  $$("[data-sf]").forEach(inp => {
+    inp.onchange = () => {
+      const i = +inp.dataset.i, f = inp.dataset.sf;
+      if (!S.subjects[i]) return;
+      S.subjects[i][f] = f === "lectures" ? clamp(parseInt(inp.value || "1", 10) || 1, 1, 99) : inp.value;
+      save(true); render();
+    };
+  });
+  $$("[data-pf]").forEach(inp => {
+    inp.onchange = () => {
+      const f = inp.dataset.pf;
+      const num = ["speed", "hoursPerLec", "dailyGoalMin"].includes(f);
+      const val = num ? (parseFloat(inp.value) || 1) : inp.value;
+      if (f === "title" || f === "subtitle") S[f] = val; else S.prefs[f] = val;
+      save(true); render();
+    };
+  });
+  const ts = $("#tSub"), tl = $("#tLec");
+  if (ts) ts.onchange = () => { S.timer.subject = ts.value; save(); };
+  if (tl) tl.onchange = () => { S.timer.lecture = clamp(parseInt(tl.value || "1", 10) || 1, 1, 999); save(); };
+}
+
+/* ---------- theme ---------- */
+function applyTheme() { document.documentElement.dataset.theme = S.prefs.theme || "dark"; }
+function toggleTheme() { S.prefs.theme = S.prefs.theme === "dark" ? "light" : "dark"; applyTheme(); save(true); }
+
+/* ---------- live clock ---------- */
+function cdText(ms) {
+  if (ms <= 0) return "DONE";
+  const d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, m = Math.floor(ms / 6e4) % 60, s = Math.floor(ms / 1000) % 60;
+  return (d ? d + "<small>d</small>" : "") + h + "<small>h</small>" + String(m).padStart(2, "0") + "<small>m</small>" + String(s).padStart(2, "0") + "<small>s</small>";
+}
+function tick() {
+  $$("[data-cd]").forEach(n => {
+    const s = subj(n.dataset.cd);
+    n.innerHTML = cdText(parseDT(s.exam).getTime() - Date.now());
+  });
+  const c = $("#tclock");
+  if (c) {
+    const ms = timerMinutes() * 60000;
+    const h = Math.floor(ms / 36e5), m = Math.floor(ms / 6e4) % 60, sec = Math.floor(ms / 1000) % 60;
+    c.textContent = String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
+    c.classList.toggle("run", S.timer.running);
+  }
+  document.title = (() => {
+    const ne = nextExam();
+    if (!ne) return "SEM2 Planner";
+    const d = Math.max(0, Math.ceil((parseDT(ne.exam) - Date.now()) / 864e5));
+    return ne.name + " in " + d + "d · SEM2";
+  })();
+}
+
+/* ---------- keyboard ---------- */
+document.addEventListener("keydown", ev => {
+  if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "z") { ev.preventDefault(); undo(); return; }
+  if (ev.key === "Escape") { const m = $("#mask"); if (m) { $("#modalHost").innerHTML = ""; modalOpen = false; } return; }
+  const tag = (ev.target.tagName || "").toLowerCase();
+  if (tag === "input" || tag === "textarea" || tag === "select" || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+  const k = ev.key;
+  const tabIdx = TABS.findIndex(t => t.key === k);
+  if (tabIdx >= 0) { S.prefs.tab = TABS[tabIdx].id; save(); render(); return; }
+  if (modalOpen) return;
+  if (k === "n") { ev.preventDefault(); indexModal(null); }
+  else if (k === "/") { ev.preventDefault(); S.prefs.tab = "index"; render(); const q = $("#idxQ"); if (q) q.focus(); }
+  else if (k === "t") { timerAction(S.timer.running ? "pause" : "start"); }
+  else if (k === "l") { timerAction("log"); }
+  else if (k === "e") { ACTS.expandAll(); }
+  else if (k === "d") { toggleTheme(); }
+  else if (k === "?") { helpModal(); }
+});
+
+/* ---------- header buttons ---------- */
+$("#btnUndo").onclick  = undo;
+$("#btnTheme").onclick = toggleTheme;
+$("#btnHelp").onclick  = helpModal;
+$("#btnSave").onclick  = exportJson;
+
+/* ---------- boot ---------- */
+applyTheme();
+render();
+setInterval(tick, 1000);
+window.addEventListener("beforeunload", () => { if (S.timer.running) { S.timer.accum += Date.now() - S.timer.startedAt; S.timer.running = false; } save(true); });
+
+</script>
+</body>
+</html>

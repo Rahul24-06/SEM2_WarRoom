@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "//": "Serves index.html over plain HTTP so localStorage gets a real origin. No build step, no dependencies.",
+      "name": "warroom",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["serve.mjs"],
+      "port": 4321
+    }
+  ]
+}

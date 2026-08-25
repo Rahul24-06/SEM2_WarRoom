@@ -1,0 +1,4 @@
+# nothing to build; keep backups out of the repo
+*.local.json
+sem2-planner-*.json
+node_modules/
