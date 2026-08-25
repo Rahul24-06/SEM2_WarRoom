@@ -1,6 +1,6 @@
 # SEM2 Warroom
 
-A private, single-file exam planner for the Semester 2 exam block (NLP, DRL, IR, ACI —
+A single-file exam planner for the Semester 2 exam block (NLP, DRL, IR, ACI —
 5 Sep to 13 Sep 2026). One HTML file, no build step, no dependencies, no network calls.
 
 ```
@@ -22,22 +22,29 @@ node serve.mjs
 
 Then open <http://localhost:4321>.
 
-## Putting it on GitHub, privately
+## Live site
+
+**<https://rahul24-06.github.io/SEM2_WarRoom/>** — served by GitHub Pages from `main`.
+
+The repo is public, because GitHub Pages cannot publish from a private repo on a Free plan
+(and even on Pro, a personal-account Pages site is publicly reachable — auth-gated Pages is
+Enterprise Cloud only).
+
+**This does not publish your studying.** Progress, lecture notes, confidence flags and the
+master index live in your browser's `localStorage`, never in this repo. What is public is
+the empty planner shell — the schedule skeleton and the code. The page is also marked
+`noindex, nofollow` so it stays out of search results.
+
+If you ever want it genuinely private *and* online, the options are GitHub Pro + Enterprise
+access control, or a host with password protection (Cloudflare Pages / Netlify).
+
+To publish an update:
 
 ```bash
-git init && git add . && git commit -m "SEM2 warroom"
-gh repo create sem2-warroom --private --source=. --push
+git add -A && git commit -m "..." && git push
 ```
 
-Two ways to reach it from anywhere:
-
-- **GitHub Pages** — Settings → Pages → deploy from `main` / root. Note that Pages on a
-  *private* repo requires GitHub Pro; on a free account, enabling Pages makes the site
-  public at `username.github.io/sem2-warroom`. The page has `noindex,nofollow` and holds no
-  personal data until you type some, but treat a free-account Pages URL as public.
-- **Keep it private** — clone the repo on each device and open the file locally, or use a
-  Codespace. Your progress lives in the browser, not in the repo, so syncing devices means
-  **Backup → export JSON → import on the other device**.
+Pages rebuilds automatically, usually within a minute.
 
 ## What it does
 
