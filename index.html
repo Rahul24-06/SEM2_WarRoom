@@ -153,6 +153,23 @@ label.fld > span{display:block;font-size:11px;text-transform:uppercase;letter-sp
 .lec.watched .n{color:var(--txt)}
 .lec:not(.watched) .n{color:var(--dim2)}
 .lec .note-flag{position:absolute;top:4px;right:5px;font-size:9px;opacity:.8}
+.lec .wbar{height:3px;border-radius:99px;background:var(--line);margin-top:6px;overflow:hidden}
+.lec .wbar i{display:block;height:100%;border-radius:99px}
+.lec.dead{opacity:.4;border-style:dashed}
+.lec.dead .n{text-decoration:line-through}
+.wstrip{padding:11px 16px;border:1px solid var(--line);border-top:0;background:var(--bg2)}
+.wsegs{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--line);gap:1px}
+.wsegs i{display:block;height:100%}
+.gap{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.gap:last-child{border-bottom:0}
+.gap .mk{font-family:var(--mono);font-size:12px;font-weight:700;min-width:52px;text-align:right}
+.gap .lbl{font-weight:650;font-size:12.5px;min-width:74px}
+.gap .why{font-size:11.5px;color:var(--dim2);flex:1}
+.gap .rbar{width:90px;height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.gap .rbar i{display:block;height:100%;border-radius:99px}
+.blockrow{display:grid;grid-template-columns:1fr 120px 74px 34px;gap:8px;align-items:end;margin-bottom:8px}
+.blockrow .warn input{border-color:var(--amber)}
+@media (max-width:720px){ .blockrow{grid-template-columns:1fr 1fr;} }
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--dim2);margin-top:12px}
 .legend span{display:inline-flex;align-items:center;gap:5px}
 .legend i{width:7px;height:7px;border-radius:50%;display:inline-block}
@@ -282,6 +299,7 @@ label.fld > span{display:block;font-size:11px;text-transform:uppercase;letter-sp
     <nav class="tabs" id="tabs"></nav>
     <div class="spacer"></div>
     <div class="row" style="gap:6px">
+      <button class="btn sm ghost" id="btnSync" title="Sync status">&#9675;</button>
       <button class="btn sm ghost" id="btnUndo" title="Undo last change (Ctrl+Z)">&#8630;</button>
       <button class="btn sm ghost" id="btnTheme" title="Toggle theme">&#9681;</button>
       <button class="btn sm ghost" id="btnHelp" title="Keyboard shortcuts">?</button>
@@ -308,11 +326,36 @@ const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const range = (a, b) => { const o = []; for (let i = a; i <= b; i++) o.push(i); return o; };
 
 /* ---------- default plan (from the written study plan) ---------- */
+
+/* Exam weighting. A block says "these lectures are worth this many marks in
+   the end-semester paper"; marks are spread evenly across the block's
+   lectures. A block with no lectures mapped yet contributes nothing and is
+   flagged in Setup until you map it.
+   Midsem syllabus is CS1-CS8; the rest of the course is CS9-CS16. The share
+   of the end-sem paper drawn from the midsem half was announced per subject. */
+const HALF = share => ([
+  { id: uid(), label: "Midsem portion · CS1-CS8", lecs: range(1, 8),  marks: share },
+  { id: uid(), label: "Post-midsem · CS9-CS16",   lecs: range(9, 16), marks: 100 - share },
+]);
+
+/* NLP is mapped by hand: the comprehensive paper was announced by MODULE, and
+   module numbers are not assumed to equal CS/lecture numbers. Marks and labels
+   are seeded; the lecture mapping is left empty for you to fill in Setup. */
+const NLP_BLOCKS = () => [
+  { id: uid(), label: "M2 Vector semantics · M3 Language Models + Neural LM", lecs: [], marks: 5 },
+  { id: uid(), label: "M5 POS Tagging · M6 Hidden Markov Models",             lecs: [], marks: 5 },
+  { id: uid(), label: "M9 Parsing/statistical · M10 Dependency Parsing",      lecs: [], marks: 6 },
+  { id: uid(), label: "M11 Contextual Embedding",                             lecs: [], marks: 6 },
+  { id: uid(), label: "M12 Word sense & WordNet · M13 Semantic web ontology",  lecs: [], marks: 6 },
+  { id: uid(), label: "M14 RAG",                                              lecs: [], marks: 6 },
+  { id: uid(), label: "M15 Text summarization",                               lecs: [], marks: 6 },
+];
+
 const SUBJECTS = [
-  { id: "nlp", name: "NLP", full: "Natural Language Processing",     color: "#ff4d5e", exam: "2026-09-05T09:00", lectures: 16 },
-  { id: "drl", name: "DRL", full: "Deep Reinforcement Learning",     color: "#ff8a3d", exam: "2026-09-06T09:00", lectures: 16 },
-  { id: "ir",  name: "IR",  full: "Information Retrieval",           color: "#4da3ff", exam: "2026-09-12T16:30", lectures: 16 },
-  { id: "aci", name: "ACI", full: "Advanced Computational Intelligence", color: "#2fd18b", exam: "2026-09-13T13:00", lectures: 16 },
+  { id: "nlp", name: "NLP", full: "Natural Language Processing",     color: "#ff4d5e", exam: "2026-09-05T09:00", lectures: 16, blocks: NLP_BLOCKS() },
+  { id: "drl", name: "DRL", full: "Deep Reinforcement Learning",     color: "#ff8a3d", exam: "2026-09-06T09:00", lectures: 16, blocks: HALF(50) },
+  { id: "ir",  name: "IR",  full: "Information Retrieval",           color: "#4da3ff", exam: "2026-09-12T16:30", lectures: 16, blocks: HALF(20) },
+  { id: "aci", name: "ACI", full: "Advanced Computational Intelligence", color: "#2fd18b", exam: "2026-09-13T13:00", lectures: 16, blocks: HALF(10) },
 ];
 
 const L = (subject, kind, a, b) => ({ id: uid(), type: "lec", subject, kind, lecs: range(a, b), done: false });
@@ -389,6 +432,7 @@ function defaultState() {
     sessions: [],            // study timer log
     prefs: { theme: "dark", tab: "dash", speed: 1.5, hoursPerLec: 2, dailyGoalMin: 300, collapsed: {} },
     timer: { running: false, startedAt: 0, subject: "nlp", lecture: 1, accum: 0 },
+    updatedAt: 0,          /* last local change - drives sync conflict resolution */
   };
 }
 
@@ -422,6 +466,7 @@ function save(now) {
       if (undoStack.length > UNDO_MAX) undoStack.shift();
     }
   }
+  if (!applyingRemote) S.updatedAt = Date.now();
   clearTimeout(saveT);
   const go = () => {
     try {
@@ -429,6 +474,7 @@ function save(now) {
       localStorage.setItem(KEY, next);
       lastWrite = next;
     } catch (e) { toast("Storage full — export a backup", "bad"); }
+    if (!applyingRemote) schedulePush();
   };
   now ? go() : saveT = setTimeout(go, 220);
 }
@@ -479,6 +525,84 @@ function lrec(s, n) {
 function lecMins(sid, n) { return S.sessions.filter(x => x.subject === sid && x.lecture === n).reduce((a, x) => a + x.mins, 0); }
 function lpeek(s, n) { return S.lec[lkey(s, n)] || { w: 0, i: 0, r: 0, rag: "", note: "", mins: 0 }; }
 function subj(id) { return S.subjects.find(s => s.id === id) || { id, name: id.toUpperCase(), color: "#888", lectures: 16, exam: "" }; }
+
+/* "1-8, 11, 13" -> [1,2,3,4,5,6,7,8,11,13] */
+function parseLecs(spec, max) {
+  const out = new Set();
+  String(spec || "").split(/[,\s]+/).forEach(part => {
+    if (!part) return;
+    const m = part.match(/^(\d+)\s*[-–—:]\s*(\d+)$/);
+    if (m) { const a = +m[1], b = +m[2]; for (let i = Math.min(a, b); i <= Math.max(a, b); i++) out.add(i); }
+    else if (/^\d+$/.test(part)) out.add(+part);
+  });
+  return [...out].filter(n => n >= 1 && (!max || n <= max)).sort((a, b) => a - b);
+}
+function fmtLecs(lecs) {
+  if (!lecs || !lecs.length) return "";
+  const out = []; let a = lecs[0], prev = lecs[0];
+  for (let i = 1; i <= lecs.length; i++) {
+    const n = lecs[i];
+    if (n !== prev + 1) { out.push(a === prev ? String(a) : a + "-" + prev); a = n; }
+    prev = n;
+  }
+  return out.join(", ");
+}
+
+/* ---------- exam weighting ----------
+   lecWeights(s) -> { lectureNumber: marks }. Unmapped blocks contribute
+   nothing, so a subject you have not mapped simply has no weighting. */
+function lecWeights(s) {
+  const out = {};
+  (s.blocks || []).forEach(b => {
+    const lecs = (b.lecs || []).filter(n => n >= 1 && n <= s.lectures);
+    if (!lecs.length || !b.marks) return;
+    const each = b.marks / lecs.length;
+    lecs.forEach(n => { out[n] = (out[n] || 0) + each; });
+  });
+  return out;
+}
+function subjMarks(s) { return (s.blocks || []).reduce((a, b) => a + (+b.marks || 0), 0); }
+function mappedMarks(s) {
+  return (s.blocks || []).reduce((a, b) => a + ((b.lecs || []).length && b.marks ? +b.marks : 0), 0);
+}
+function isWeighted(s) { return mappedMarks(s) > 0; }
+/* share of the paper a lecture carries, 0-100 */
+function lecShare(s, n, weights) {
+  const w = weights || lecWeights(s), tot = mappedMarks(s);
+  return tot ? (w[n] || 0) / tot * 100 : 0;
+}
+/* Marks you are currently not holding: unwatched counts fully, weak 60%,
+   medium 30%, watched-but-unrated 20%, strong 0. */
+function riskFactor(L) {
+  if (!L.w) return 1;
+  if (L.rag === "weak") return 0.6;
+  if (L.rag === "medium") return 0.3;
+  if (L.rag === "strong") return 0;
+  return 0.2;
+}
+function marksAtRisk(s) {
+  const w = lecWeights(s);
+  let risk = 0;
+  for (let n = 1; n <= s.lectures; n++) risk += (w[n] || 0) * riskFactor(lpeek(s.id, n));
+  return risk;
+}
+/* Every weighted lecture, worst value-for-effort first. */
+function valueGaps(limit) {
+  const rows = [];
+  S.subjects.forEach(s => {
+    if (!isWeighted(s)) return;
+    const w = lecWeights(s), tot = mappedMarks(s);
+    for (let n = 1; n <= s.lectures; n++) {
+      const marks = w[n] || 0;
+      if (!marks) continue;
+      const L = lpeek(s.id, n), rf = riskFactor(L);
+      if (!rf) continue;
+      rows.push({ s, n, L, marks, share: tot ? marks / tot * 100 : 0, risk: marks * rf });
+    }
+  });
+  rows.sort((a, b) => b.risk - a.risk || parseDT(a.s.exam) - parseDT(b.s.exam));
+  return limit ? rows.slice(0, limit) : rows;
+}
 
 function subjStats(s) {
   const tot = s.lectures;
@@ -661,7 +785,10 @@ function viewDash() {
     stat_("Needed / day", p.perDay ? p.perDay.toFixed(1) : "0",
           p.left + " lectures over " + p.remainingDays + " days") +
     stat_("Master index", String(o.idx), "topics indexed for open book", "var(--blue)") +
-    stat_("Weak topics", String(o.weak), "marked 🔴 — revisit first", o.weak ? "var(--red)" : "") +
+    (S.subjects.some(isWeighted)
+      ? stat_("Marks at risk", Math.round(S.subjects.reduce((a, x) => a + marksAtRisk(x), 0)) + "",
+              "across all weighted papers", "var(--amber)")
+      : stat_("Weak topics", String(o.weak), "marked 🔴 — revisit first", o.weak ? "var(--red)" : "")) +
     stat_("Study logged", hm(o.mins), "of ~" + (S.subjects.reduce((a, s) => a + s.lectures, 0) * (S.prefs.hoursPerLec || 2)) + "h estimated") +
   "</div>";
 
@@ -687,12 +814,30 @@ function viewDash() {
   h += "<div>" + timerCard() + upNext(upcoming) + "</div>";
   h += "</div>";
 
-  /* weak topics */
+  /* highest-value gaps: what actually costs you marks */
+  const gaps = valueGaps(10);
+  if (gaps.length) {
+    const top = gaps[0].risk || 1;
+    h += '<div class="sec-title"><h2>⚡ Where the marks are</h2><div class="line"></div>' +
+      '<span class="chip">by marks at risk</span></div><div class="card pad">';
+    h += gaps.map(g => {
+      const why = !g.L.w ? "not watched" : g.L.rag === "weak" ? "🔴 weak" : g.L.rag === "medium" ? "🟡 needs revision" : "watched, unrated";
+      return '<div class="gap"><button class="pill" style="border-color:' + g.s.color + ';color:' + g.s.color +
+        '" data-act="lec" data-s="' + g.s.id + '" data-n="' + g.n + '">' + esc(g.s.name) + " L" + g.n + "</button>" +
+        '<span class="why">' + why + " · worth " + g.share.toFixed(1) + "% of the " + esc(g.s.name) + " paper</span>" +
+        '<div class="rbar"><i style="width:' + clamp(g.risk / top * 100, 6, 100) + "%;background:" + g.s.color + '"></i></div>' +
+        '<span class="mk" style="color:' + g.s.color + '">' + g.risk.toFixed(1) + "</span></div>";
+    }).join("");
+    h += '<div class="tiny muted2" style="margin-top:11px">Ranked by <b>marks × how shaky you are</b>, then by which exam comes first. ' +
+      "Unwatched counts full, 🔴 60%, 🟡 30%, unrated 20%, 🟢 nothing.</div></div>";
+  }
+
+  /* weak topics that are not lecture-shaped */
   const weakLecs = [];
   S.subjects.forEach(s => { for (let n = 1; n <= s.lectures; n++) { const L = lpeek(s.id, n); if (L.rag === "weak") weakLecs.push({ s, n, L }); } });
   const weakIdx = S.index.filter(e => e.pri === "weak");
   if (weakLecs.length || weakIdx.length) {
-    h += '<div class="sec-title"><h2>🔴 Revisit first</h2><div class="line"></div></div><div class="card pad">';
+    h += '<div class="sec-title"><h2>🔴 Flagged weak</h2><div class="line"></div></div><div class="card pad">';
     if (weakLecs.length) h += '<div class="row" style="gap:6px">' + weakLecs.map(x =>
       '<button class="pill" style="border-color:var(--red);color:var(--red)" data-act="lec" data-s="' + x.s.id + '" data-n="' + x.n + '">' +
       esc(x.s.name) + " L" + x.n + "</button>").join("") + "</div>";
@@ -878,24 +1023,34 @@ let subjFilter = "all";
 function viewSubjects() {
   let h = '<div class="sec-title"><h2>Lecture tracker</h2><div class="line"></div>' +
     '<div class="row noprint" style="gap:6px">' +
-      ["all:All", "todo:Not watched", "weak:🔴 Weak", "noidx:Not indexed"].map(o => {
+      ["all:All", "todo:Not watched", "weak:🔴 Weak", "noidx:Not indexed", "value:⚡ Marks at risk"].map(o => {
         const [k, lab] = o.split(":");
         return '<button class="btn xs ' + (subjFilter === k ? "primary" : "ghost") + '" data-act="subjFilter" data-f="' + k + '">' + lab + "</button>";
       }).join("") + "</div></div>";
 
   h += S.subjects.map(s => {
     const st = subjStats(s), ex = examStatus(s);
+    const weights = lecWeights(s), weighted = isWeighted(s), totM = mappedMarks(s);
+    const maxShare = Math.max(0, ...Object.keys(weights).map(k => weights[k] / (totM || 1) * 100));
     let cells = "";
     for (let n = 1; n <= s.lectures; n++) {
       const L = lpeek(s.id, n);
+      const marks = weights[n] || 0, share = totM ? marks / totM * 100 : 0;
+      const dead = weighted && !marks;          /* mapped subject, lecture not on the paper */
       if (subjFilter === "todo" && L.w) continue;
       if (subjFilter === "weak" && L.rag !== "weak") continue;
       if (subjFilter === "noidx" && L.i) continue;
-      cells += '<div class="lec ' + (L.w ? "watched" : "") + '" data-rag="' + (L.rag || "") + '" data-act="lec" data-s="' + s.id + '" data-n="' + n + '" ' +
-        'title="Click to open · Shift-click marks watched">' +
+      if (subjFilter === "value" && (dead || riskFactor(L) === 0)) continue;
+      const tip = weighted
+        ? (dead ? "Not on the announced paper" : share.toFixed(1) + "% of the paper (" + marks.toFixed(1) + " marks)")
+        : "No weighting mapped yet";
+      cells += '<div class="lec ' + (L.w ? "watched " : "") + (dead ? "dead" : "") + '" data-rag="' + (L.rag || "") + '" data-act="lec" data-s="' + s.id + '" data-n="' + n + '" ' +
+        'title="L' + n + " — " + tip + ' · Click to open, shift-click marks watched">' +
         (L.note && L.note.trim() ? '<span class="note-flag">📝</span>' : "") +
         '<div class="n">L' + n + "</div>" +
         '<div class="dots"><i class="' + (L.w ? "on" : "") + '"></i><i class="idx ' + (L.i ? "on" : "") + '"></i><i class="rev ' + (L.r ? "on" : "") + '"></i></div>' +
+        (weighted ? '<div class="wbar" title="' + tip + '"><i style="width:' +
+          (maxShare ? clamp(share / maxShare * 100, 0, 100) : 0) + '%;background:' + s.color + '"></i></div>' : "") +
       "</div>";
     }
     if (!cells) cells = '<div class="muted2 tiny" style="padding:8px">Nothing matches this filter.</div>';
@@ -909,6 +1064,7 @@ function viewSubjects() {
         '<span class="tiny muted2 num">' + st.w + "/" + st.tot + " watched · " + st.r + " revised · " + st.i + " indexed</span>" +
         '<div class="minibar" style="width:110px"><i style="width:' + st.pct + '%;background:' + s.color + '"></i></div>' +
       "</div>" +
+      weightStrip(s) +
       '<div class="subjbody"><div class="lgrid">' + cells + "</div>" +
         '<div class="legend"><span><i style="background:var(--green)"></i>watched</span>' +
           '<span><i style="background:var(--blue)"></i>indexed</span>' +
@@ -926,6 +1082,33 @@ function viewSubjects() {
       "</div></div>";
   }).join("");
   return h;
+}
+
+/* A one-line summary of how the paper is distributed across this subject. */
+function weightStrip(s) {
+  const blocks = (s.blocks || []).filter(b => +b.marks);
+  if (!blocks.length) return "";
+  const mapped = mappedMarks(s), declared = subjMarks(s);
+  const unmapped = blocks.filter(b => !(b.lecs || []).length);
+  const seg = blocks.filter(b => (b.lecs || []).length).map((b, i) => {
+    const pct = mapped ? b.marks / mapped * 100 : 0;
+    return '<i title="' + esc(b.label) + " — " + b.marks + ' marks" style="width:' + pct + "%;background:" +
+      (i % 2 ? "color-mix(in srgb," + s.color + " 55%,transparent)" : s.color) + '"></i>';
+  }).join("");
+  const risk = marksAtRisk(s);
+  return '<div class="wstrip">' +
+    '<div class="row tiny" style="gap:8px;margin-bottom:6px">' +
+      '<b style="font-size:11px;letter-spacing:.06em;color:var(--dim2)">PAPER WEIGHTING</b>' +
+      (mapped ? '<span class="muted2">' + Math.round(risk) + " of " + Math.round(mapped) + " marks still at risk</span>" : "") +
+      '<span class="spacer"></span>' +
+      (unmapped.length
+        ? '<button class="btn xs" data-act="tab" data-tab="setup" style="border-color:var(--amber);color:var(--amber)">⚠ ' +
+          unmapped.length + " block" + (unmapped.length > 1 ? "s" : "") + " unmapped — map " +
+          unmapped.reduce((a, b) => a + (+b.marks || 0), 0) + " marks</button>"
+        : '<span class="muted2 tiny">' + declared + " marks mapped</span>") +
+    "</div>" +
+    (seg ? '<div class="wsegs">' + seg + "</div>" : "") +
+  "</div>";
 }
 
 /* -------------------------------------------------------- MASTER INDEX */
@@ -1072,6 +1255,41 @@ function viewSetup() {
         '<span class="spacer"></span><button class="btn xs ghost danger" data-act="delSubject" data-i="' + i + '">Remove</button></div>' +
       "</div>").join("") + "</div>";
 
+  /* ---- exam weighting ---- */
+  h += '<div class="sec-title"><h2>Exam weighting</h2><div class="line"></div>' +
+    '<span class="chip">what each lecture is worth</span></div>';
+  h += '<div class="card pad"><div class="tiny muted2" style="margin-bottom:14px">' +
+    "A block says <b>these lectures are worth this many marks</b>; marks are split evenly across the lectures you list. " +
+    "Midsem syllabus is CS1–CS8, full course CS1–CS16. " +
+    "<b>NLP is seeded from the announced comprehensive structure but deliberately left unmapped</b> — module numbers are not assumed to be CS numbers, so type the CS/lecture numbers for each module row yourself." +
+    "</div>";
+
+  h += S.subjects.map((sub, si) => {
+    const blocks = sub.blocks || [];
+    const mapped = mappedMarks(sub), declared = subjMarks(sub);
+    const unmapped = blocks.filter(b => +b.marks && !(b.lecs || []).length);
+    return '<div style="margin-bottom:20px;padding-left:11px;border-left:3px solid ' + sub.color + '">' +
+      '<div class="row" style="margin-bottom:9px"><b style="color:' + sub.color + '">' + esc(sub.name) + "</b>" +
+      '<span class="tiny muted2">' + declared + " marks declared · " + Math.round(mapped) + " mapped" +
+      (unmapped.length ? ' · <span style="color:var(--amber)">' + unmapped.length + " row" + (unmapped.length > 1 ? "s" : "") + " need lecture numbers</span>" : "") +
+      "</span><span class=\"spacer\"></span>" +
+      '<button class="btn xs ghost" data-act="addBlock" data-i="' + si + '">+ Block</button></div>' +
+      (blocks.length
+        ? blocks.map((b, bi) =>
+          '<div class="blockrow">' +
+            '<label class="fld"><span>What it covers</span><input type="text" data-bf="label" data-i="' + si + '" data-b="' + bi + '" value="' + esc(b.label || "") + '" /></label>' +
+            '<label class="fld' + (!(b.lecs || []).length && +b.marks ? " warn" : "") + '"><span>CS / lectures</span>' +
+              '<input type="text" data-bf="lecs" data-i="' + si + '" data-b="' + bi + '" value="' + esc(fmtLecs(b.lecs)) + '" placeholder="e.g. 2-3" /></label>' +
+            '<label class="fld"><span>Marks</span><input type="number" min="0" step="0.5" data-bf="marks" data-i="' + si + '" data-b="' + bi + '" value="' + (b.marks || 0) + '" /></label>' +
+            '<button class="btn xs ghost danger" data-act="delBlock" data-i="' + si + '" data-b="' + bi + '" title="Remove">✕</button>' +
+          "</div>").join("")
+        : '<div class="tiny muted2" style="padding:6px 0">No weighting — every lecture is treated as equally important.</div>') +
+    "</div>";
+  }).join("");
+  h += '<div class="tiny muted2">Announced shares of the end-sem paper drawn from the midsem half: ' +
+    "<b>DRL 50%</b> · <b>IR 20%</b> · <b>ACI 10%</b>. That makes one post-midsem IR lecture worth 4× a midsem one, " +
+    "and one post-midsem ACI lecture worth 9× — the ⚡ ranking on Today already accounts for it.</div></div>";
+
   h += '<div class="sec-title"><h2>Preferences</h2><div class="line"></div></div>' +
     '<div class="card pad"><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">' +
       '<label class="fld"><span>Planner title</span><input type="text" data-pf="title" value="' + esc(S.title) + '" /></label>' +
@@ -1083,6 +1301,39 @@ function viewSetup() {
     '<div class="tiny muted2" style="margin-top:10px">Watch difficult lectures at 1.25–1.5×, easy or repetitive sections at 1.5–2×. ' +
     "At " + S.prefs.speed + "× the remaining " + paceInfo().left + " lectures take about <b>" +
     hm(paceInfo().left * S.prefs.hoursPerLec * 60 / (S.prefs.speed || 1)) + "</b> of viewing.</div></div>";
+
+  /* ---- cross-device sync ---- */
+  h += '<div class="sec-title"><h2>Sync across devices</h2><div class="line"></div>' +
+    '<span class="chip">private gist</span></div>';
+  h += '<div class="card pad">' +
+    '<div class="tiny muted2" style="margin-bottom:12px">' +
+      "Your progress lives in <b>this browser</b>, which is why a fresh device opens an empty planner. " +
+      "Connect a GitHub token and the planner mirrors everything into <b>one private gist</b> - it pushes a few seconds after each change, " +
+      "and pulls when a device loads or regains focus. Newest change wins." +
+    "</div>" +
+    '<div class="grid" style="grid-template-columns:1fr auto;gap:10px;align-items:end">' +
+      '<label class="fld"><span>GitHub personal access token</span>' +
+        '<input type="password" id="ghTok" value="' + (GH.token ? "" : "") + '" placeholder="' +
+        (GH.token ? "connected - paste a new token to replace" : "ghp_...") + '" autocomplete="off" spellcheck="false" /></label>' +
+      '<button class="btn primary" data-act="ghConnect">' + (GH.token ? "Reconnect" : "Connect") + "</button>" +
+    "</div>" +
+    '<div class="row" style="margin-top:11px;gap:7px">' +
+      (GH.token ? '<button class="btn sm" data-act="ghPull">Pull now</button>' +
+                  '<button class="btn sm" data-act="ghPush">Push now</button>' +
+                  '<button class="btn sm ghost danger" data-act="ghDisconnect">Disconnect</button>' : "") +
+      '<span class="spacer"></span><span class="tiny" id="syncLine">' + syncLineHTML() + "</span>" +
+    "</div>" +
+    '<details style="margin-top:14px"><summary class="tiny muted2" style="cursor:pointer">How to make the token, and what it can reach</summary>' +
+      '<div class="tiny muted" style="margin-top:9px;line-height:1.75">' +
+        "1. github.com &rarr; Settings &rarr; Developer settings &rarr; <b>Personal access tokens &rarr; Tokens (classic)</b><br>" +
+        "2. Generate new token (classic), tick <b>only the <code>gist</code> scope</b>, set an expiry past 13 Sep.<br>" +
+        "3. Paste it here on each device you study from.<br><br>" +
+        "<b>Be aware:</b> gists need a <i>classic</i> token - fine-grained tokens cannot touch gists - and a classic <code>gist</code> token can read and write " +
+        "<b>every gist on your account</b>, not just this one. It is stored in this browser only: never in the repo, never in a JSON backup, never in the gist itself. " +
+        "This page is served from a public repo, so anyone who gets at this browser profile gets the token. Revoke it at " +
+        "<a href=\"https://github.com/settings/tokens\" target=\"_blank\" rel=\"noopener\">github.com/settings/tokens</a> the moment exams are done." +
+      "</div></details>" +
+  "</div>";
 
   h += '<div class="sec-title"><h2>Data</h2><div class="line"></div></div>' +
     '<div class="card pad"><div class="row">' +
@@ -1421,6 +1672,11 @@ const ACTS = {
   addSession()   { sessionModal(); },
   delSession(el) { S.sessions = S.sessions.filter(x => x.id !== el.dataset.id); save(true); render(); },
   timer(el)      { timerAction(el.dataset.mode); },
+  addBlock(el)   { const sub = S.subjects[+el.dataset.i]; if (!sub) return;
+                   (sub.blocks = sub.blocks || []).push({ id: uid(), label: "", lecs: [], marks: 0 });
+                   save(true); render(); },
+  delBlock(el)   { const sub = S.subjects[+el.dataset.i]; if (!sub || !sub.blocks) return;
+                   sub.blocks.splice(+el.dataset.b, 1); save(true); render(); },
   addSubject()   { const n = S.subjects.length + 1;
                    S.subjects.push({ id: "sub" + uid(), name: "SUB" + n, full: "New subject",
                      color: ["#c084fc","#22d3ee","#fbbf24","#f472b6"][n % 4], exam: todayStr() + "T09:00", lectures: 16 });
@@ -1429,6 +1685,10 @@ const ACTS = {
                    confirmBox("Remove " + s.name + "? Its lectures, index entries and sessions stay in the backup but disappear from view.", () => {
                      S.subjects.splice(i, 1); save(true); render(); }); },
   exportJson, importJson, exportMd, exportCsv,
+  ghConnect()    { const i = $("#ghTok"); ghConnect(i ? i.value : ""); },
+  ghPull()       { ghPull(); },
+  ghPush()       { ghPush(); },
+  ghDisconnect() { confirmBox("Disconnect sync on this device? Progress already in the gist stays there.", ghDisconnect); },
   print()        { window.print(); },
   resetProgress(){ confirmBox("Reset every watched / indexed / revised flag, confidence rating and logged session? Notes and the master index are kept.", () => {
                      Object.values(S.lec).forEach(L => { L.w = L.i = L.r = 0; L.rag = ""; L.mins = 0; });
@@ -1462,6 +1722,17 @@ function afterRender() {
       const i = +inp.dataset.i, f = inp.dataset.sf;
       if (!S.subjects[i]) return;
       S.subjects[i][f] = f === "lectures" ? clamp(parseInt(inp.value || "1", 10) || 1, 1, 99) : inp.value;
+      save(true); render();
+    };
+  });
+  $$("[data-bf]").forEach(inp => {
+    inp.onchange = () => {
+      const sub = S.subjects[+inp.dataset.i]; if (!sub || !sub.blocks) return;
+      const b = sub.blocks[+inp.dataset.b]; if (!b) return;
+      const f = inp.dataset.bf;
+      if (f === "lecs") b.lecs = parseLecs(inp.value, sub.lectures);
+      else if (f === "marks") b.marks = Math.max(0, parseFloat(inp.value) || 0);
+      else b.label = inp.value;
       save(true); render();
     };
   });
@@ -1534,10 +1805,174 @@ $("#btnTheme").onclick = toggleTheme;
 $("#btnHelp").onclick  = helpModal;
 $("#btnSave").onclick  = exportJson;
 
+/* =====================================================================
+   SYNC - private GitHub Gist as the shared store
+   ---------------------------------------------------------------------
+   localStorage is per-browser, so a Pages URL opened on a second device
+   starts empty. This mirrors the state into ONE private gist: newest
+   timestamp wins, and a device pulls on load and on regaining focus.
+
+   The token is a credential, so it is kept OUT of S - it never lands in a
+   JSON backup and is never written to the gist. It lives only in this
+   browser, under its own key.
+   ===================================================================== */
+const GH_KEY = "sem2planner.gh";
+const GH_FILE = "sem2-warroom.json";
+const GH_DESC = "SEM2 Warroom - study planner state (private)";
+
+let GH = (() => {
+  try { return Object.assign({ token: "", gistId: "", lastPush: 0, lastPull: 0 }, JSON.parse(localStorage.getItem(GH_KEY) || "{}")); }
+  catch (e) { return { token: "", gistId: "", lastPush: 0, lastPull: 0 }; }
+})();
+function saveGH() { try { localStorage.setItem(GH_KEY, JSON.stringify(GH)); } catch (e) {} }
+
+let applyingRemote = false;      /* suppresses the save -> push -> save loop */
+let pushT = null, syncState = "off", syncMsg = "";
+
+function setSync(state, msg) {
+  syncState = state; syncMsg = msg || "";
+  const b = $("#btnSync");
+  if (b) {
+    const icon = { off: "\u25cb", ok: "\u25cf", busy: "\u25cc", err: "\u25b2" }[state] || "\u25cb";
+    const col  = { off: "var(--dim2)", ok: "var(--green)", busy: "var(--accent)", err: "var(--red)" }[state];
+    b.innerHTML = '<span style="color:' + col + '">' + icon + "</span>";
+    b.title = "Sync: " + (msg || state);
+  }
+  const line = $("#syncLine");
+  if (line) line.innerHTML = syncLineHTML();
+}
+function syncLineHTML() {
+  if (!GH.token) return '<span class="muted2">Not connected - this device keeps its progress to itself.</span>';
+  const t = x => x ? new Date(x).toLocaleTimeString() : "never";
+  const col = syncState === "err" ? "var(--red)" : syncState === "ok" ? "var(--green)" : "var(--dim)";
+  return '<span style="color:' + col + '">' + esc(syncMsg || syncState) + "</span>" +
+    '<span class="muted2"> &middot; pulled ' + t(GH.lastPull) + " &middot; pushed " + t(GH.lastPush) +
+    (GH.gistId ? ' &middot; <a href="https://gist.github.com/' + esc(GH.gistId) + '" target="_blank" rel="noopener">open gist</a>' : "") + "</span>";
+}
+
+async function ghFetch(path, opts) {
+  const r = await fetch("https://api.github.com" + path, Object.assign({
+    headers: {
+      Authorization: "Bearer " + GH.token,
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  }, opts || {}));
+  if (r.status === 401) throw new Error("Token rejected (401) - needs a classic token with the gist scope");
+  if (r.status === 403) throw new Error("Forbidden (403) - check the gist scope or rate limit");
+  if (r.status === 404) throw new Error("404");
+  if (!r.ok) throw new Error("GitHub returned " + r.status);
+  return r.json();
+}
+
+/* Find the planner gist already on the account, so a second device only ever
+   needs the token - not the gist id. */
+async function ghDiscover() {
+  const list = await ghFetch("/gists?per_page=100");
+  const hit = list.find(g => g.files && g.files[GH_FILE]);
+  return hit ? hit.id : "";
+}
+
+async function ghPull(opts) {
+  if (!GH.token) return;
+  const silent = opts && opts.silent;
+  try {
+    setSync("busy", "pulling...");
+    if (!GH.gistId) GH.gistId = await ghDiscover();
+    if (!GH.gistId) { setSync("ok", "no gist yet - push to create one"); return; }
+    const g = await ghFetch("/gists/" + GH.gistId);
+    const f = g.files && g.files[GH_FILE];
+    if (!f) { setSync("err", "gist has no " + GH_FILE); return; }
+    const raw = f.truncated ? await (await fetch(f.raw_url)).text() : f.content;
+    const remote = JSON.parse(raw);
+    GH.lastPull = Date.now(); saveGH();
+    const rt = remote.updatedAt || 0, lt = S.updatedAt || 0;
+    if (rt > lt) {
+      applyingRemote = true;
+      try {
+        const d = defaultState();
+        S = Object.assign({}, d, remote, { prefs: Object.assign({}, d.prefs, remote.prefs || {}) });
+        S.timer = Object.assign({}, d.timer, remote.timer || {}, { running: false });
+        save(true); applyTheme(); render();
+      } finally { applyingRemote = false; }
+      setSync("ok", "pulled newer state");
+      if (!silent) toast("Synced from your other device", "good");
+    } else if (lt > rt) {
+      setSync("ok", "this device is ahead");
+      schedulePush(400);
+    } else setSync("ok", "up to date");
+  } catch (e) {
+    if (String(e.message) === "404") { GH.gistId = ""; saveGH(); setSync("err", "gist not found - will recreate on next push"); }
+    else setSync("err", e.message);
+  }
+}
+
+async function ghPush() {
+  if (!GH.token) return;
+  try {
+    setSync("busy", "pushing...");
+    const body = JSON.stringify({
+      description: GH_DESC,
+      public: false,
+      files: { [GH_FILE]: { content: JSON.stringify(S, null, 1) } },
+    });
+    if (!GH.gistId) GH.gistId = await ghDiscover();
+    const g = GH.gistId
+      ? await ghFetch("/gists/" + GH.gistId, { method: "PATCH", body })
+      : await ghFetch("/gists", { method: "POST", body });
+    GH.gistId = g.id; GH.lastPush = Date.now(); saveGH();
+    setSync("ok", "saved to gist");
+  } catch (e) {
+    if (String(e.message) === "404") { GH.gistId = ""; saveGH(); setSync("err", "gist missing - press Push to recreate"); }
+    else setSync("err", e.message);
+  }
+}
+
+function schedulePush(delay) {
+  if (!GH.token) return;
+  clearTimeout(pushT);
+  setSync("busy", "pending...");
+  pushT = setTimeout(ghPush, delay == null ? 3000 : delay);
+}
+
+async function ghConnect(token) {
+  GH.token = (token || "").trim();
+  saveGH();
+  if (!GH.token) { setSync("off", "disconnected"); return; }
+  try {
+    setSync("busy", "checking token...");
+    const me = await ghFetch("/user");
+    GH.gistId = await ghDiscover(); saveGH();
+    toast("Connected as " + me.login, "good");
+    if (GH.gistId) await ghPull(); else await ghPush();
+  } catch (e) { setSync("err", e.message); toast(e.message, "bad"); }
+  render();
+}
+function ghDisconnect() {
+  GH = { token: "", gistId: "", lastPush: 0, lastPull: 0 };
+  saveGH(); setSync("off", "disconnected"); render();
+  toast("Disconnected - progress stays on this device");
+}
+
+/* pull when the tab regains focus, at most every 20s */
+let lastFocusPull = 0;
+window.addEventListener("focus", () => {
+  if (!GH.token) return;
+  if (Date.now() - lastFocusPull < 20000) return;
+  lastFocusPull = Date.now();
+  ghPull({ silent: true });
+});
+/* last-gasp push when the tab goes away */
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden" && GH.token && pushT) { clearTimeout(pushT); ghPush(); }
+});
+
 /* ---------- boot ---------- */
 applyTheme();
 render();
 setInterval(tick, 1000);
+setSync(GH.token ? "busy" : "off", GH.token ? "connecting..." : "not connected");
+if (GH.token) ghPull({ silent: true });
 window.addEventListener("beforeunload", () => { if (S.timer.running) { S.timer.accum += Date.now() - S.timer.startedAt; S.timer.running = false; } save(true); });
 
 </script>

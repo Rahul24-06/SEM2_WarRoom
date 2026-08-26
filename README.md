@@ -56,7 +56,8 @@ add days, add tasks, change lecture ranges. Finished past days fold themselves a
 
 **Subjects** — a 16-lecture grid per subject. Each lecture tracks *watched / indexed /
 revised*, a 🟢🟡🔴 confidence flag, and free-text notes (key concepts, formulas, algorithms,
-timestamps). Filter to "not watched", "🔴 weak", or "not indexed".
+timestamps). Filter to "not watched", "🔴 weak", "not indexed", or "⚡ marks at risk". Each
+cell carries a bar showing what that lecture is worth in the paper.
 
 **Index** — the `SEMESTER_OPEN_BOOK_MASTER_INDEX`, in the prescribed format:
 `Topic → Subject → Lecture → Page/Timestamp → Formula/Algorithm`. Searchable across topics,
@@ -65,8 +66,43 @@ wins an open-book exam — build it while you watch, not after.
 
 **Stats** — progress rings, confidence map per subject, 21-day study-time chart, session log.
 
-**Setup** — edit subjects, exam dates/times and lecture counts; set playback speed and hours
-per lecture (the plan's time estimates follow); export/import backups; reset.
+**Setup** — edit subjects, exam dates/times and lecture counts; map exam weighting; connect
+cross-device sync; set playback speed and hours per lecture (the plan's time estimates
+follow); export/import backups; reset.
+
+## Exam weighting — where the marks actually are
+
+Midsem syllabus is **CS1–CS8**; the full course is **CS1–CS16**. The announced share of the
+end-semester paper drawn from the midsem half:
+
+| Subject | Midsem half | Per lecture, CS1–CS8 | Per lecture, CS9–CS16 | Verdict |
+|---|---|---|---|---|
+| DRL | 50% | 6.25% | 6.25% | even — treat both halves alike |
+| IR | 20% | 2.5% | **10%** | a post-midsem lecture is worth **4×** |
+| ACI | 10% | 1.25% | **11.25%** | a post-midsem lecture is worth **9×** |
+
+**NLP** is weighted by the announced comprehensive structure (40 marks total):
+
+| Modules | Marks |
+|---|---|
+| M2 Vector semantics · M3 Language Models + Neural LM | 5 |
+| M5 POS Tagging · M6 Hidden Markov Models | 5 |
+| M9 Parsing/statistical · M10 Dependency Parsing | 6 |
+| M11 Contextual Embedding | 6 |
+| M12 Word sense & WordNet · M13 Semantic web ontology | 6 |
+| M14 RAG | 6 |
+| M15 Text summarization | 6 |
+
+These seven rows are pre-loaded in **Setup → Exam weighting** with their marks, but their
+lecture numbers are deliberately **left blank**: module numbers are not assumed to equal CS
+numbers. Type the CS/lecture numbers into each row (`2-3`, `9, 10`, ranges or lists both
+work) and the planner starts weighting NLP. Until then NLP is simply unweighted, and the
+subject header shows an amber "unmapped" warning. Any lecture that ends up in no block is
+dimmed and struck through — not on the paper.
+
+**Today → ⚡ Where the marks are** ranks every weighted lecture by *marks × how shaky you
+are* (unwatched counts full, 🔴 60%, 🟡 30%, watched-but-unrated 20%, 🟢 nothing), tie-broken
+by whichever exam is sooner. That list is the answer to "what do I open next".
 
 ## Pace logic
 
@@ -74,15 +110,40 @@ per lecture (the plan's time estimates follow); export/import backups; reset.
 yesterday** — today is still in play, so an unfinished today never counts as being behind.
 "Needed / day" divides the lectures left by the plan days left.
 
+## Sync across devices
+
+State lives in `localStorage`, which is **per browser, per device** — that is why opening the
+Pages URL on a second device shows an empty planner. The repo only ever holds the empty
+shell; your progress is never committed to it.
+
+To make devices share: **Setup → Sync across devices**, paste a GitHub token, press Connect.
+The planner then mirrors everything into **one private gist** (`sem2-warroom.json`), pushing
+a few seconds after each change and pulling on load and whenever a tab regains focus.
+Newest change wins. On a second device you only need the token — it finds the gist itself.
+
+Making the token: GitHub → Settings → Developer settings → **Personal access tokens →
+Tokens (classic)** → tick **only the `gist` scope** → set an expiry past 13 Sep.
+
+Know what you are handing over:
+
+- Gists require a **classic** token; fine-grained tokens cannot access gists at all.
+- A classic `gist` token can read and write **every gist on your account**, not just this one.
+- It is stored in that browser only — never in the repo, never in a JSON backup, never inside
+  the gist. This page is served from a public repo, so anyone with access to that browser
+  profile has the token.
+- **Revoke it at <https://github.com/settings/tokens> once exams are over.**
+
+The header dot shows sync state: ○ off · ◌ working · ● synced · ▲ error (hover for why).
+
 ## Data, and not losing it
 
-Everything is stored in your browser's `localStorage` under `sem2planner.state.v1`. Nothing
-is uploaded anywhere.
+Everything is stored in your browser's `localStorage` under `sem2planner.state.v1` (the sync
+token lives separately under `sem2planner.gh`, so backups never contain it).
 
 - **Ctrl+Z** undoes the last change (40 steps, in memory for the session).
 - Two open tabs stay in sync instead of overwriting each other.
 - **Export a JSON backup** before clearing browsing data, switching browser, or changing
-  device. That file is the only copy that outlives the browser profile.
+  device. With sync off, that file is the only copy that outlives the browser profile.
 
 ## Keyboard
 
