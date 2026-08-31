@@ -51,8 +51,16 @@ Pages rebuilds automatically, usually within a minute.
 **Today** — live countdowns to all four exams, coverage and pace stats, today's tasks with
 one-click ticking, a study timer that logs sessions, and the open-book protocol card.
 
-**Plan** — the full 25 Aug → 13 Sep schedule, day by day. Every task is editable; you can
-add days, add tasks, change lecture ranges. Finished past days fold themselves away.
+**Plan** — the day-by-day schedule, two weeks: NLP + DRL through their Sep 5/6 exams, then
+IR + ACI through Sep 12/13. Every task is editable; you can add days, add tasks, change
+lecture ranges. Finished past days fold themselves away.
+
+The plan shape itself (which lectures land on which day) is baked into the app rather than
+computed from your progress — that is a deliberate choice someone makes, not an algorithm.
+When it needs to change (exam dates move, you get ahead or behind by more than a day or two),
+that ships as a code update to `defaultDays()`, and **Setup → Plan → Apply latest plan
+revision** pushes it into your saved state without touching lecture progress, notes, the
+index, sessions, or exam weighting.
 
 **Subjects** — a 16-lecture grid per subject. Each lecture tracks *watched / indexed /
 revised*, a 🟢🟡🔴 confidence flag, and free-text notes (key concepts, formulas, algorithms,

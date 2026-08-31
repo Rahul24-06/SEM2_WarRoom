@@ -363,26 +363,25 @@ const T = (text, kind)          => ({ id: uid(), type: "todo", kind: kind || "ta
 const X = (subject, text)       => ({ id: uid(), type: "exam", subject, kind: "exam", text, done: false });
 const DAY = (date, title, phase, tasks) => ({ date, title, phase, tasks });
 
+/* Revised 2026-08-31, mid-run: DRL L1-6 and NLP L1-2 were already watched by
+   then, so this plan only schedules what was left. Two-week shape —
+   week of Aug31 is NLP+DRL through their exams, week of Sep7 is IR+ACI
+   through theirs — matching how the exams actually land, not the original
+   from-scratch six-day sprint. */
 function defaultDays() {
   return [
-    DAY("2026-08-25", "NLP + DRL — first pass", "core", [L("nlp","watch",1,2),   L("drl","watch",1,2)]),
-    DAY("2026-08-26", "NLP + DRL — first pass", "core", [L("nlp","watch",3,4),   L("drl","watch",3,4)]),
-    DAY("2026-08-27", "NLP + DRL — first pass", "core", [L("nlp","watch",5,6),   L("drl","watch",5,6)]),
-    DAY("2026-08-28", "NLP + DRL — first pass", "core", [L("nlp","watch",7,8),   L("drl","watch",7,8)]),
-    DAY("2026-08-29", "NLP + DRL — push",       "core", [L("nlp","watch",9,11),  L("drl","watch",9,10)]),
-    DAY("2026-08-30", "NLP + DRL — close out",  "core", [L("nlp","watch",12,16), L("drl","watch",11,16),
+    DAY("2026-08-31", "NLP + DRL — remaining lectures", "core", [L("nlp","watch",3,6),   L("drl","watch",7,9)]),
+    DAY("2026-09-01", "NLP + DRL — remaining lectures", "core", [L("nlp","watch",7,10),  L("drl","watch",10,12)]),
+    DAY("2026-09-02", "NLP + DRL — remaining lectures", "core", [L("nlp","watch",11,13), L("drl","watch",13,14)]),
+    DAY("2026-09-03", "NLP + DRL — close out",          "core", [L("nlp","watch",14,16), L("drl","watch",15,16),
                                                           T("Checkpoint: NLP 16/16 and DRL 16/16 complete", "task")]),
-    DAY("2026-08-31", "IR + ACI — first pass", "pass2", [L("ir","watch",1,4),    L("aci","watch",1,4)]),
-    DAY("2026-09-01", "IR + ACI — first pass", "pass2", [L("ir","watch",5,8),    L("aci","watch",5,8)]),
-    DAY("2026-09-02", "IR + ACI — first pass", "pass2", [L("ir","watch",9,12),   L("aci","watch",9,12)]),
-    DAY("2026-09-03", "IR + ACI — close out",  "pass2", [L("ir","watch",13,16),  L("aci","watch",13,16),
-                                                          T("Checkpoint: all four subjects 16/16 first-pass complete", "task")]),
     DAY("2026-09-04", "NLP FINAL REVISION", "revise", [
       L("nlp","revise",1,16),
       T("Build/finish NLP master index", "task"),
       T("Formulas + algorithms sweep", "task"),
       T("Important questions + weak topics", "task"),
       T("Open-book retrieval drill (find any topic in under 60s)", "task"),
+      T("DRL: light formulas/algorithms pass — it has runway into tomorrow evening too", "task"),
       T("No new learning at night — sleep properly", "rest"),
     ]),
     DAY("2026-09-05", "NLP EXAM  →  DRL revision", "exam", [
@@ -396,15 +395,15 @@ function defaultDays() {
       T("REST — recover properly", "rest"),
       T("Start IR lightly only if you actually have energy", "task"),
     ]),
-    DAY("2026-09-07", "IR revision + ACI pass", "revise", [L("ir","revise",1,4),   L("aci","watch",1,2)]),
-    DAY("2026-09-08", "IR revision + ACI pass", "revise", [L("ir","revise",5,8),   L("aci","watch",3,6)]),
-    DAY("2026-09-09", "IR revision + ACI pass", "revise", [L("ir","revise",9,12),  L("aci","watch",7,10)]),
-    DAY("2026-09-10", "IR revision + ACI pass", "revise", [L("ir","revise",13,16), L("aci","watch",11,14)]),
+    DAY("2026-09-07", "IR + ACI — first pass", "pass2", [L("ir","watch",1,4),   L("aci","watch",1,4)]),
+    DAY("2026-09-08", "IR + ACI — first pass", "pass2", [L("ir","watch",5,8),   L("aci","watch",5,8)]),
+    DAY("2026-09-09", "IR + ACI — first pass", "pass2", [L("ir","watch",9,12),  L("aci","watch",9,12)]),
+    DAY("2026-09-10", "IR + ACI — close out",  "pass2", [L("ir","watch",13,16), L("aci","watch",13,16),
+                                                          T("Checkpoint: IR 16/16 and ACI 16/16 first-pass complete", "task")]),
     DAY("2026-09-11", "Full IR revision + mock", "revise", [
       T("Full IR revision sweep", "task"),
       T("IR mock / past-paper under exam conditions", "task"),
-      L("aci","watch",15,16),
-      T("ACI weak topics", "task"),
+      T("ACI weak topics — light pass, its exam is a day behind IR's", "task"),
     ]),
     DAY("2026-09-12", "IR EXAM  →  ACI intensive", "exam", [
       T("Morning: final IR revision", "task"),
@@ -1302,6 +1301,22 @@ function viewSetup() {
     "At " + S.prefs.speed + "× the remaining " + paceInfo().left + " lectures take about <b>" +
     hm(paceInfo().left * S.prefs.hoursPerLec * 60 / (S.prefs.speed || 1)) + "</b> of viewing.</div></div>";
 
+  /* ---- schedule management ---- */
+  h += '<div class="sec-title"><h2>Plan</h2><div class="line"></div></div>';
+  h += '<div class="card pad">' +
+    '<div class="tiny muted2" style="margin-bottom:12px">' +
+      "The day-by-day schedule (Plan tab) is a template baked into the app, not something derived from your progress. " +
+      "When the exam calendar or your pace changes enough to need a different shape, the fix ships as a code update - " +
+      "then <b>this button applies it to your saved state</b> without touching lecture progress, notes, the index, sessions or exam weighting." +
+    "</div>" +
+    '<label class="row" style="gap:8px;margin-bottom:11px;cursor:pointer">' +
+      '<input type="checkbox" id="planMarkDone" style="width:auto" />' +
+      '<span class="tiny">Also mark <b>NLP L1-2</b> and <b>DRL L1-6</b> watched - what the current revision assumes is already done</span>' +
+    "</label>" +
+    '<button class="btn primary" data-act="regeneratePlan">Apply latest plan revision</button>' +
+    '<span class="tiny muted2" style="margin-left:11px">Current shape: two weeks - NLP + DRL through Sep 6, then IR + ACI through Sep 13.</span>' +
+  "</div>";
+
   /* ---- cross-device sync ---- */
   h += '<div class="sec-title"><h2>Sync across devices</h2><div class="line"></div>' +
     '<span class="chip">private gist</span></div>';
@@ -1677,6 +1692,20 @@ const ACTS = {
                    save(true); render(); },
   delBlock(el)   { const sub = S.subjects[+el.dataset.i]; if (!sub || !sub.blocks) return;
                    sub.blocks.splice(+el.dataset.b, 1); save(true); render(); },
+  regeneratePlan() {
+    const el = { dataset: { markDone: ($("#planMarkDone") && $("#planMarkDone").checked) ? "1" : "0" } };
+    const already = "NLP L1-2 and DRL L1-6 already watched, so today\'s plan skips re-scheduling them.";
+    confirmBox("Replace the day-by-day plan with the latest revision (two-week shape: NLP+DRL through Sep6, IR+ACI through Sep13)? " +
+      "Lecture progress, notes, the master index, sessions and exam weighting are untouched. " + already, () => {
+      S.days = defaultDays();
+      S.prefs.collapsed = {};
+      if (el && el.dataset.markDone === "1") {
+        [["nlp",1,2],["drl",1,6]].forEach(([sid,a,b]) => { for (let n = a; n <= b; n++) lrec(sid, n).w = 1; });
+      }
+      save(true); render();
+      toast("Plan replaced with the latest revision", "good");
+    });
+  },
   addSubject()   { const n = S.subjects.length + 1;
                    S.subjects.push({ id: "sub" + uid(), name: "SUB" + n, full: "New subject",
                      color: ["#c084fc","#22d3ee","#fbbf24","#f472b6"][n % 4], exam: todayStr() + "T09:00", lectures: 16 });
